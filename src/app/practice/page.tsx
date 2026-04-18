@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
+import { appendStat } from "@/lib/statsStore";
 
 export default function PracticePage() {
   const router = useRouter();
@@ -92,7 +93,7 @@ export default function PracticePage() {
       if (stopOnError) {
         // In strict mode, reject the exact stroke if it fails equality at its length
         if (val.length > value.length && targetText.substring(0, val.length) !== val) {
-          setErrorCount(prev => prev + 1);
+          setErrorCount((prev: number) => prev + 1);
           return; // reject completely
         }
       } else {
@@ -100,7 +101,7 @@ export default function PracticePage() {
         if (val.length > value.length) {
           const charIndex = val.length - 1;
           if (val[charIndex] !== targetText[charIndex]) {
-            setErrorCount(prev => prev + 1);
+            setErrorCount((prev: number) => prev + 1);
           }
         }
       }
@@ -128,7 +129,7 @@ export default function PracticePage() {
          for (let i=0; i <= value.length; i++) {
             if (value.substring(0, i) !== targetText.substring(0, i)) {
                finalVal = value.substring(0, i - 1);
-               setErrorCount(prev => prev + 1);
+               setErrorCount((prev: number) => prev + 1);
                break;
             }
          }
@@ -146,7 +147,7 @@ export default function PracticePage() {
     const chars = targetText.split("");
     const confirmedLength = isComposing ? value.length - composingData.length : value.length;
     
-    return chars.map((char, index) => {
+    return chars.map((char: string, index: number) => {
       let stateClass = "text-upcoming";
       
       if (index < confirmedLength) {

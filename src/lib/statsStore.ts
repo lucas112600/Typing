@@ -9,7 +9,7 @@ export const getStats = (): StatSession[] => {
   try {
     const raw = localStorage.getItem("TYPING_STATS");
     return raw ? JSON.parse(raw) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };

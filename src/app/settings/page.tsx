@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 
-import { useConfig } from "@/context/ConfigContext";
+import { useConfig, FontSizeOption, CursorStyleOption } from "@/context/ConfigContext";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function SettingsPage() {
                   opacity: fontSize === size ? 1 : 0.5,
                   fontWeight: 900
                 }}
-                onClick={() => setFontSize(size)}
+                onClick={() => setFontSize(size as FontSizeOption)}
               >
                 {size}
               </button>
@@ -59,7 +59,7 @@ export default function SettingsPage() {
                   opacity: cursorStyle === style ? 1 : 0.5,
                   fontWeight: 900
                 }}
-                onClick={() => setCursorStyle(style)}
+                onClick={() => setCursorStyle(style as CursorStyleOption)}
               >
                 {style}
               </button>
