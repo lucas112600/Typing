@@ -1,7 +1,15 @@
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --accent: #ff0000;
+  --background-start: #0B0F19;
+  --background-end: #1A1F35;
+  --foreground: #F8FAFC;
+  --foreground-muted: #94A3B8;
+  --accent-primary: #8B5CF6;
+  --accent-secondary: #06B6D4;
+  --accent-danger: #EF4444;
+  
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   --font-scale: 1;
 }
 
@@ -9,31 +17,55 @@ html {
   font-size: calc(16px * var(--font-scale));
 }
 
-
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: 0 !important;
-  cursor: none !important; /* System cursor hidden, custom crosshair implemented via React */
+  cursor: none !important; /* Custom crosshair pointer */
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: var(--background);
+  background: linear-gradient(135deg, var(--background-start) 0%, var(--background-end) 100%);
+  background-attachment: fixed;
   color: var(--foreground);
+  font-family: var(--font-outfit), var(--font-noto-sans-tc), sans-serif;
   overflow-x: hidden;
   height: 100vh;
   width: 100vw;
 }
 
-/* Animations */
-@keyframes step-in {
+/* Background animated orbes for extra flair */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  opacity: 0.15;
+  pointer-events: none;
+}
+body::before {
+  top: -100px;
+  left: -100px;
+  background: var(--accent-primary);
+}
+body::after {
+  bottom: -200px;
+  right: -100px;
+  background: var(--accent-secondary);
+}
+
+
+/* Smooth Easing Animations */
+@keyframes fade-slide-up {
   0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
@@ -43,47 +75,74 @@ body {
 
 .animate-step-in {
   opacity: 0;
-  animation: step-in 0s forwards; /* Duration will be overridden by style inject or fixed 0.01s ? wait, the user said non-sliding, popping in. */
+  animation: fade-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Hard Pop animation instead of smooth slide */
-@keyframes pop-in {
-  0%, 99% {
-    opacity: 0;
-    transform: translateY(8px); /* <10px translate */
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-glow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stagger-1 { animation: pop-in 0.1s steps(1, end) forwards; }
-.stagger-2 { animation: pop-in 0.2s steps(1, end) forwards; }
-.stagger-3 { animation: pop-in 0.3s steps(1, end) forwards; }
-.stagger-4 { animation: pop-in 0.4s steps(1, end) forwards; }
-.stagger-5 { animation: pop-in 0.5s steps(1, end) forwards; }
-
-.brutal-border {
-  border: 1px solid var(--foreground);
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--foreground);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.brutal-invert {
-  transition: none; /* No transition for hard feeling */
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-.brutal-invert:hover {
-  background-color: var(--foreground);
-  color: var(--background);
+.glass-button:active {
+  transform: translateY(1px);
 }
 
-.brutal-invert-red {
-  background-color: var(--accent);
-  color: var(--background);
+.glass-button.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--accent-primary);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
 }
 
-.brutal-invert:active, .brutal-invert-red:active {
-  transform: translate(1px, 1px); /* 模擬物理機械的操作觸感 */
+.glass-button.danger {
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+}
+
+.glass-button.danger.active {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Typography elements */
+.text-gradient {
+  background: linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 a {
@@ -98,8 +157,12 @@ button {
   color: inherit;
 }
 
-/* Custom Selection */
 ::selection {
-  background-color: var(--foreground);
-  color: var(--background);
+  background-color: rgba(139, 92, 246, 0.3);
+  color: var(--foreground);
+}
+
+/* Practice UI Classes */
+.mono-text {
+  font-family: var(--font-mono), var(--font-noto-sans-tc), monospace;
 }
