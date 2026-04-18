@@ -93,7 +93,6 @@ export default function PracticePage() {
   }, [updateCaretPosition]);
 
   const startWithTheme = (theme: ThemeText) => {
-    setSelectedTheme(theme);
     setTargetText(theme.text);
     setTitle(theme.title);
     setLanguage(theme.language);
