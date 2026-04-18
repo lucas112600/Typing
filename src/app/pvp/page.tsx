@@ -81,7 +81,8 @@ export default function PvPLobby() {
       .single();
 
     if (queryError || !data) {
-      setError("Room not found. Make sure the code is correct or create a new arena.");
+      console.error("Room Join Error:", queryError);
+      setError(queryError ? `Error: ${queryError.message}` : "Room not found. Check the code.");
       setLoading(false);
       return;
     }
@@ -99,7 +100,8 @@ export default function PvPLobby() {
       .insert({ id });
 
     if (insertError) {
-      setError("Failed to create room. Please try again.");
+      console.error("Room Creation Error:", insertError);
+      setError(`Failed: ${insertError.message}`);
       setLoading(false);
       return;
     }
