@@ -25,18 +25,20 @@ export default function PracticePage() {
     SystemLogPubSub.publish("SYS_PRACTICE_INIT");
     const dataStr = sessionStorage.getItem("typing_practice_data");
 // ... skipped unmodified parts ...
-    if (dataStr) {
-      try {
-        const data = JSON.parse(dataStr);
-        setTargetText(data.text || "Hello World");
-        setTitle(data.title || "Unknown");
-      } catch (e) {
-        setTargetText("Error loading text.");
+    setTimeout(() => {
+      if (dataStr) {
+        try {
+          const data = JSON.parse(dataStr);
+          setTargetText(data.text || "Hello World");
+          setTitle(data.title || "Unknown");
+        } catch {
+          setTargetText("Error loading text.");
+        }
+      } else {
+        setTargetText("The quick brown fox jumps over the lazy dog.");
+        setTitle("Fallback Text");
       }
-    } else {
-      setTargetText("The quick brown fox jumps over the lazy dog.");
-      setTitle("Fallback Text");
-    }
+    }, 0);
 
     const t = setTimeout(() => {
       inputRef.current?.focus();
@@ -86,7 +88,7 @@ export default function PracticePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isFinished) return;
-    let val = e.target.value;
+    const val = e.target.value;
 
     if (!isComposing) {
       if (stopOnError) {
@@ -116,7 +118,7 @@ export default function PracticePage() {
   const handleCompUpdate = (e: React.CompositionEvent<HTMLInputElement>) => {
     setComposingData(e.data);
   };
-  const handleCompEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
+  const handleCompEnd = () => {
     setIsComposing(false);
     setComposingData("");
     
