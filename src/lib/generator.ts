@@ -91,7 +91,7 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
     id: `auto-${Date.now()}`,
     title: overrideTitle && overrideTitle.trim() !== "每日隨機生成" && overrideTitle.trim() !== "" ? overrideTitle : sourceRaw.title,
     text: finalText,
-    difficulty: diff,
+    difficulty: diff === "NORMAL" ? "CORE" : diff,
     wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
     source: "Real Text Knowledge Base"
   };
