@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
 import audioManager from "@/lib/audioManager";
@@ -13,7 +12,6 @@ export default function PracticePage() {
   const router = useRouter();
   const { fontSize, stopOnError, soundEnabled, soundVolume } = useConfig();
   
-  const [selectedTheme, setSelectedTheme] = useState<ThemeText | null>(null);
   const [gameState, setGameState] = useState<"SETUP" | "RACING" | "FINISHED">("SETUP");
   
   const [targetText, setTargetText] = useState("");
@@ -26,6 +24,8 @@ export default function PracticePage() {
   const [language, setLanguage] = useState<"en" | "zh">("en");
   
   // Caret position tracking
+  // Final Stats for display
+  const [finalResult, setFinalResult] = useState({ wpm: 0, accuracy: 0 });
   const [caretPos, setCaretPos] = useState({ left: 0, top: 0 });
   
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,15 +36,18 @@ export default function PracticePage() {
     // Check session data first
     const dataStr = sessionStorage.getItem("typing_practice_data");
     if (dataStr) {
-      try {
-        const data = JSON.parse(dataStr);
-        setTargetText(data.text || "");
-        setTitle(data.title || "Custom Session");
-        setLanguage(data.language || "en");
-        if (data.text) setGameState("RACING");
-      } catch (e) {
-        console.error("Failed to parse session data", e);
-      }
+      const load = async () => {
+        try {
+          const data = JSON.parse(dataStr);
+          setTargetText(data.text || "");
+          setTitle(data.title || "Custom Session");
+          setLanguage(data.language || "en");
+          if (data.text) setGameState("RACING");
+        } catch (e) {
+          console.error("Failed to parse session data", e);
+        }
+      };
+      load();
     }
     
     const t = setTimeout(() => {
@@ -130,11 +133,13 @@ export default function PracticePage() {
        
        const accuracy = Math.max(0, 100 - (finalErrors / targetText.length) * 100);
        const wpmDivisor = language === "zh" ? 1 : 5;
-       const wpm = (correctChars / wpmDivisor) / minutes;
+       const wpm = Math.round((correctChars / wpmDivisor) / minutes);
        
+       setFinalResult({ wpm, accuracy: Math.round(accuracy) });
+
        appendStat({
          date: new Date().toISOString(),
-         wpm: Math.round(wpm),
+         wpm,
          accuracy: Math.round(accuracy)
        });
 
@@ -185,7 +190,7 @@ export default function PracticePage() {
       const color = state === "correct" ? "var(--foreground)" :
                     state === "upcoming" ? "var(--foreground-muted)" :
                     state === "wrong" ? "var(--foreground-danger)" : "#2383E2";
-      const opacity = state === "upcoming" ? 0.3 : 1;
+      const opacity = state === "upcoming" ? 0.55 : 1;
       const bg = state === "wrong" ? "rgba(235, 87, 87, 0.2)" : "transparent";
 
       return (
@@ -305,11 +310,11 @@ export default function PracticePage() {
           <div style={{ display: "flex", justifyContent: "center", gap: "4rem", margin: "2rem 0" }}>
              <div>
                <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SPEED</div>
-               <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{Math.round((value.length / 5) / ((Date.now() - (startTime || 0))/60000))} <span style={{ fontSize: "1rem" }}>WPM</span></div>
+               <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{finalResult.wpm} <span style={{ fontSize: "1rem" }}>WPM</span></div>
              </div>
              <div>
                <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>ACCURACY</div>
-               <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100))}%</div>
+               <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{finalResult.accuracy}%</div>
              </div>
           </div>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>

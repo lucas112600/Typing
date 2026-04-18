@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
-import { ArrowLeft, Settings, Terminal, BookOpen, Quote, Feather, Check } from "lucide-react";
+import { ArrowLeft, Settings, Check } from "lucide-react";
 import audioManager from "@/lib/audioManager";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
@@ -100,6 +100,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
+          // Immediately drop loading state when subscribed
+          setGameState(current => current === "LOADING" ? "LOBBY" : current);
+
           await channel.track({
             id: userId,
             name: nickname || `Player ${userId.slice(0, 4)}`,
@@ -108,6 +111,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             wpm: 0,
             finished: false,
           });
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("Supabase Realtime Channel Error");
         }
       });
 
@@ -270,7 +275,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       const color = state === "correct" ? "var(--foreground)" :
                     state === "upcoming" ? "var(--foreground-muted)" :
                     "var(--foreground-danger)";
-      const opacity = state === "upcoming" ? 0.3 : 1;
+      const opacity = state === "upcoming" ? 0.55 : 1;
       const bg = state === "wrong" ? "rgba(235, 87, 87, 0.2)" : "transparent";
 
       return (
