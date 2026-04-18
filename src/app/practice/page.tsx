@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
-import { ArrowLeft, Flag } from "lucide-react";
 
 export default function PracticePage() {
   const router = useRouter();
@@ -164,12 +163,13 @@ export default function PracticePage() {
 
       const isCursorHere = index === value.length && !isFinished;
 
-      // Professional Colors
+      // Notion Colors
       const color = stateClass === "text-correct" ? "var(--foreground)" :
                     stateClass === "text-upcoming" ? "var(--foreground-muted)" :
-                    stateClass === "text-wrong" ? "var(--accent-danger)" : "var(--accent-secondary)";
+                    stateClass === "text-wrong" ? "var(--foreground-danger)" : "#2383E2";
                     
-      const opacity = stateClass === "text-upcoming" ? 0.4 : 1;
+      const opacity = stateClass === "text-upcoming" ? 0.3 : 1;
+      const bg = stateClass === "text-wrong" ? "rgba(235, 87, 87, 0.2)" : "transparent";
 
       return (
         <span 
@@ -179,9 +179,9 @@ export default function PracticePage() {
             display: "inline-block",
             color,
             opacity,
-            borderBottom: stateClass === "text-composing" ? "2px solid var(--accent-secondary)" : "none",
-            backgroundColor: stateClass === "text-wrong" ? "rgba(239, 68, 68, 0.15)" : "transparent",
-            borderRadius: stateClass === "text-wrong" ? "4px" : "0",
+            backgroundColor: bg,
+            borderBottom: stateClass === "text-composing" ? "2px solid #2383E2" : "none",
+            borderRadius: stateClass === "text-wrong" ? "3px" : "0",
             transition: "color 0.1s"
           }}
         >
@@ -192,7 +192,7 @@ export default function PracticePage() {
               bottom: 0,
               width: "100%",
               height: "2px",
-              backgroundColor: "var(--accent-primary)",
+              backgroundColor: "var(--foreground)",
               animation: "blink 1s step-end infinite"
             }} />
           )}
@@ -204,46 +204,34 @@ export default function PracticePage() {
 
   const getFontSizeRem = () => {
      switch (fontSize) {
-       case "MEDIUM": return "1.5rem";
-       case "LARGE": return "2rem";
-       case "EXTRA_LARGE": return "2.5rem";
-       default: return "2rem";
+       case "MEDIUM": return "1.25rem";
+       case "LARGE": return "1.75rem";
+       case "EXTRA_LARGE": return "2.25rem";
+       default: return "1.75rem";
      }
   };
 
   return (
     <div 
-      className="animate-fade-in stagger-1"
+      className="notion-page animate-fade-in"
       ref={containerRef}
       onClick={handleContainerClick}
       style={{
-        display: "flex", flex: 1, flexDirection: "column",
-        minHeight: "100vh", padding: "2rem", position: "relative"
+        maxWidth: "900px", padding: "4rem 2rem", margin: "0 auto", minHeight: "100vh", position: "relative"
       }}
     >
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "1000px", margin: "0 auto", marginBottom: "4rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-           <Flag size={20} color="var(--foreground-muted)" />
-           <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--foreground-muted)" }}>{title}</span>
-        </div>
-        <button className="app-button" onClick={() => router.push("/")} style={{ padding: "0.5rem 1rem" }}>
-           <ArrowLeft size={16} /> Quit Practice
-        </button>
-      </header>
+      <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", marginBottom: "3rem" }}>
+         ESC to quit · Workspace / {title}
+      </div>
 
-      <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <div className="mono-text" style={{
-          maxWidth: "1000px",
-          width: "100%",
-          fontSize: getFontSizeRem(),
-          fontWeight: language === "zh" ? 400 : 500,
-          lineHeight: "1.6",
-          wordBreak: "break-all",
-          whiteSpace: "pre-wrap",
-          padding: "0 1rem",
-        }}>
-          {renderText()}
-        </div>
+      <div className="mono-text" style={{
+         fontSize: getFontSizeRem(),
+         fontWeight: language === "zh" ? 400 : 500,
+         lineHeight: "1.8",
+         wordBreak: "break-all",
+         whiteSpace: "pre-wrap",
+      }}>
+         {renderText()}
       </div>
 
       <input
@@ -254,29 +242,25 @@ export default function PracticePage() {
         onCompositionStart={handleCompStart}
         onCompositionUpdate={handleCompUpdate}
         onCompositionEnd={handleCompEnd}
-        style={{ position: "absolute", top: "50%", left: "50%", opacity: 0, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 0, left: 0, opacity: 0, pointerEvents: "none" }}
         autoFocus spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off"
       />
 
       {isFinished && (
-        <div className="app-card animate-fade-in stagger-2" style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          padding: "3rem",
-          display: "flex", flexDirection: "column", gap: "1.5rem", alignItems: "center",
-          boxShadow: "var(--shadow)"
+        <div className="animate-fade-in" style={{
+          marginTop: "4rem",
+          padding: "2rem",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius)"
         }}>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--accent-primary)" }}>Session Complete</h2>
-          <div style={{ color: "var(--foreground-muted)" }}>Data saved. Press ESC or click the button below to return.</div>
-          <button className="app-button primary" style={{ width: "100%", padding: "1rem" }} onClick={() => router.push("/")}>
-            <ArrowLeft size={18} /> Return to Dashboard
+          <h2 className="notion-h2" style={{ marginTop: 0 }}>Session Complete</h2>
+          <p className="notion-p">Your performance data has been logged to the database.</p>
+          <button className="app-button primary" style={{ width: "fit-content", padding: "0.5rem 1rem" }} onClick={() => router.push("/")}>
+            Return to Pages
           </button>
         </div>
       )}
 
-      {/* Adding a global blink animation for cursor */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes blink {
           0%, 100% { opacity: 1; }

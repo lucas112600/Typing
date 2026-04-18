@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
-import Logo from "@/components/Logo";
 import { generateText, Difficulty } from "@/lib/generator";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, Layers } from "lucide-react";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText } from "lucide-react";
 
 export default function HomeInteraction() {
   const router = useRouter();
-  const [lang, setLang] = useState<"en" | "zh">("zh");
+  const [lang, setLang] = useState<"en" | "zh">("en");
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -37,114 +36,100 @@ export default function HomeInteraction() {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      minHeight: "100vh",
-      padding: "2rem",
-      margin: "0 auto",
-      maxWidth: "1100px",
-      width: "100%",
-    }}>
-      {/* Header section */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4rem" }} className="animate-fade-in stagger-1">
-         <Logo size={40} />
-         
-         <div style={{ display: "flex", gap: "0.5rem" }}>
-           <button className="app-button" onClick={() => router.push("/explore")} style={{ padding: "0.5rem 1rem" }}>
-             <BookOpen size={16} /> Explore
-           </button>
-           <button className="app-button" onClick={() => router.push("/stats")} style={{ padding: "0.5rem 1rem" }}>
-             <BarChart2 size={16} /> Stats
-           </button>
-           <button className="app-button" onClick={() => router.push("/settings")} style={{ padding: "0.5rem 1rem" }}>
-             <Settings size={16} /> Settings
-           </button>
-         </div>
-      </header>
+    <div className="notion-page animate-fade-in">
+      
+      {/* Cover Icon / Title */}
+      <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⌨️</div>
+      <h1 className="notion-title">Typing Practice Hub</h1>
+      <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
+        Focus on improving your typing speed and accuracy through procedurally generated, distraction-free practices.
+      </p>
 
-      {/* Main Content Area */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3rem" }}>
-        
-        {/* Hero Section */}
-        <div className="animate-fade-in stagger-2" style={{ textAlign: "center", maxWidth: "600px" }}>
-          <h1 style={{ fontSize: "3rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-1px" }}>
-            The Modern Typing Trainer
-          </h1>
-          <p style={{ fontSize: "1.1rem", color: "var(--foreground-muted)", marginBottom: "2rem" }}>
-            Improve your typing speed and accuracy through procedurally generated practices tailored to your skill level.
-          </p>
+      {/* Pages Navigation */}
+      <h2 className="notion-h2">Pages</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
+        <button className="app-button" onClick={() => router.push("/docs")}>
+          <FileText size={18} color="var(--foreground-muted)" />
+          <span>Documentation</span>
+        </button>
+        <button className="app-button" onClick={() => router.push("/explore")}>
+          <BookOpen size={18} color="var(--foreground-muted)" />
+          <span>Explore Database</span>
+        </button>
+        <button className="app-button" onClick={() => router.push("/stats")}>
+          <BarChart2 size={18} color="var(--foreground-muted)" />
+          <span>Performance Stats</span>
+        </button>
+        <button className="app-button" onClick={() => router.push("/settings")}>
+          <Settings size={18} color="var(--foreground-muted)" />
+          <span>Settings</span>
+        </button>
+      </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "2rem" }}>
-            <button className={`app-button ${lang === "zh" ? "active" : ""}`} onClick={() => setLang("zh")} style={{ padding: "0.5rem 1.5rem" }}>中文 (ZH)</button>
-            <button className={`app-button ${lang === "en" ? "active" : ""}`} onClick={() => setLang("en")} style={{ padding: "0.5rem 1.5rem" }}>English (EN)</button>
-          </div>
-
+      {/* Quick Play Block */}
+      <h2 className="notion-h2">Quick Start</h2>
+      <p className="notion-p">Instantly jump into a randomly generated practice session.</p>
+      
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+        <span style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>Target Language:</span>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
           <button 
-             className="app-button primary"
-             onClick={() => handleStart()}
-             style={{ padding: "1.25rem 3rem", fontSize: "1.2rem", width: "100%" }}
-             disabled={generating}
-           >
-             {generating ? (
-               "Generating Practice..."
-             ) : (
-               <>
-                 <Zap size={20} fill="currentColor" />
-                 Quick Start
-                 <ChevronRight size={20} />
-               </>
-             )}
-           </button>
+            className="app-button" 
+            style={{ width: "auto", padding: "0.2rem 0.5rem", border: "1px solid", borderColor: lang === "zh" ? "var(--border)" : "transparent", backgroundColor: lang === "zh" ? "var(--surface-hover)" : "transparent" }}
+            onClick={() => setLang("zh")}
+          >
+            中文
+          </button>
+          <button 
+            className="app-button" 
+            style={{ width: "auto", padding: "0.2rem 0.5rem", border: "1px solid", borderColor: lang === "en" ? "var(--border)" : "transparent", backgroundColor: lang === "en" ? "var(--surface-hover)" : "transparent" }}
+            onClick={() => setLang("en")}
+          >
+            English
+          </button>
         </div>
+      </div>
 
-        {/* Categories Section */}
-        <div className="app-card animate-fade-in stagger-3" style={{ width: "100%", maxWidth: "800px", padding: "2.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
-            <Layers className="text-muted" size={24} style={{ color: "var(--foreground-muted)" }} />
-            <h2 style={{ fontSize: "1.5rem", fontWeight: 600 }}>Category Training</h2>
-          </div>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
-            {/* EASY */}
-            <div className="app-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", boxShadow: "none" }}>
-               <div>
-                 <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--accent-secondary)" }}>EASY</div>
-                 <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>~50 Words. Basic vocabulary and simple sentences.</div>
-               </div>
-               <button className="app-button" disabled={generating} style={{ marginTop: "auto", width: "100%", padding: "0.75rem" }} onClick={() => handleStart("EASY")}>
-                 Select Level
-               </button>
-            </div>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
+         <button 
+            className="app-button primary"
+            onClick={() => handleStart()}
+            disabled={generating}
+            style={{ width: "auto", padding: "0.5rem 1.2rem", height: "40px" }}
+          >
+            {generating ? "Generating..." : <><Zap size={16} /> Auto Start <ChevronRight size={16} /></>}
+         </button>
+      </div>
 
-            {/* NORMAL */}
-            <div className="app-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", borderColor: "var(--accent-primary)", boxShadow: "var(--shadow-sm)" }}>
-               <div>
-                 <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--accent-primary)" }}>NORMAL</div>
-                 <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>~100 Words. Standard paragraphs and average complexity.</div>
-               </div>
-               <button className="app-button primary" disabled={generating} style={{ marginTop: "auto", width: "100%", padding: "0.75rem" }} onClick={() => handleStart("NORMAL")}>
-                 Select Level
-               </button>
-            </div>
+      {/* Difficulty Targeting */}
+      <h2 className="notion-h2">Category Targeting</h2>
+      <p className="notion-p">Select a specific difficulty to constrain the AI string generation length.</p>
 
-            {/* HARD */}
-            <div className="app-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", boxShadow: "none" }}>
-               <div>
-                 <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--accent-danger)" }}>HARD</div>
-                 <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>~200 Words. Advanced vocabulary and structural layouts.</div>
-               </div>
-               <button className="app-button" disabled={generating} style={{ marginTop: "auto", width: "100%", padding: "0.75rem" }} onClick={() => handleStart("HARD")}>
-                 Select Level
-               </button>
-            </div>
-          </div>
-        </div>
+      <div className="notion-p" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "4px" }}>
+        
+        <button className="app-button" onClick={() => handleStart("EASY")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+           <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+             <span style={{ fontWeight: 600 }}>🟢 Easy</span>
+             <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~50 Words</span>
+           </div>
+        </button>
+
+        <button className="app-button" onClick={() => handleStart("NORMAL")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+           <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+             <span style={{ fontWeight: 600 }}>🟡 Normal</span>
+             <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~100 Words</span>
+           </div>
+        </button>
+
+        <button className="app-button" onClick={() => handleStart("HARD")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+           <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+             <span style={{ fontWeight: 600 }}>🔴 Hard</span>
+             <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~200 Words</span>
+           </div>
+        </button>
 
       </div>
-      
-      {/* Spacer to keep footer clear */}
-      <div style={{ height: "100px" }} />
+
     </div>
   );
 }
