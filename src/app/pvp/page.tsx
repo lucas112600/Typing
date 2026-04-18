@@ -2,120 +2,94 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoveRight, Users, Hash, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Users, Zap, Terminal, BookOpen, Quote, Feather } from "lucide-react";
+import { THEME_PACKS, ThemeText } from "@/lib/themes";
 
 export default function PvPLobby() {
   const [roomId, setRoomId] = useState("");
+  const [selectedThemeId, setSelectedThemeId] = useState(THEME_PACKS[0].id);
   const router = useRouter();
 
-  const handleJoin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (roomId.trim()) {
-      router.push(`/pvp/room/${roomId.trim().toLowerCase()}`);
-    }
+  const joinRoom = (id: string) => {
+    if (!id.trim()) return;
+    router.push(`/pvp/room/${id.trim()}`);
   };
 
-  const handleCreateRandom = () => {
-    const randomId = Math.random().toString(36).substring(2, 7);
-    router.push(`/pvp/room/${randomId}`);
+  const createQuickRoom = () => {
+    const id = Math.random().toString(36).substring(2, 7);
+    // Since we can't pass data easily to the next page without a DB, 
+    // we'll let the user change it inside the room if they are the host.
+    router.push(`/pvp/room/${id}`);
   };
 
   return (
-    <div className="notion-page animate-fade-in" style={{ maxWidth: "800px", margin: "0 auto", padding: "4rem 2rem" }}>
-      <nav style={{ marginBottom: "2rem" }}>
-        <button 
-          onClick={() => router.push("/")}
-          style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: "0.5rem", 
-            background: "none", 
-            border: "none", 
-            color: "var(--foreground-muted)", 
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            padding: "0.5rem 0"
-          }}
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Workspace</span>
-        </button>
-      </nav>
-      <header style={{ marginBottom: "4rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--foreground-muted)", fontSize: "0.9rem", marginBottom: "1rem" }}>
-          <Users size={16} />
-          <span>Multiplayer Arena</span>
-        </div>
-        <h1 className="notion-h1" style={{ fontSize: "3.5rem", letterSpacing: "-0.04em", margin: "0" }}>PvP Rancing</h1>
-        <p className="notion-p" style={{ fontSize: "1.2rem", opacity: 0.6 }}>Race against friends in real-time. Speed is power.</p>
-      </header>
+    <div className="notion-page animate-fade-in" style={{ maxWidth: "800px" }}>
+      <button onClick={() => router.push("/")} className="app-button" style={{ width: "fit-content", marginBottom: "2rem" }}>
+        <ArrowLeft size={16} /> Back
+      </button>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
-        {/* Create Card */}
-        <div 
-          onClick={handleCreateRandom}
-          className="hover-card"
-          style={{
-            padding: "2rem",
-            border: "1px solid var(--border)",
-            borderRadius: "12px",
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
-        >
-          <div style={{ marginBottom: "2rem", color: "#2383E2" }}>
-            <MoveRight size={32} />
-          </div>
-          <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1.25rem" }}>Create Quick Room</h3>
-          <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--foreground-muted)" }}>Start a new room and invite others with a link.</p>
-        </div>
-
-        {/* Join Card */}
-        <div 
-          style={{
-            padding: "2rem",
-            border: "1px solid var(--border)",
-            borderRadius: "12px",
-          }}
-        >
-          <div style={{ marginBottom: "2rem", color: "var(--foreground-muted)" }}>
-            <Hash size={32} />
-          </div>
-          <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Join by ID</h3>
-          <form onSubmit={handleJoin} style={{ display: "flex", gap: "0.5rem" }}>
-            <input 
-              type="text" 
-              placeholder="Room Code"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              style={{
-                background: "var(--bg-secondary)",
-                border: "1px solid var(--border)",
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                flex: 1,
-                color: "var(--foreground)",
-                outline: "none"
-              }}
-            />
-            <button 
-              type="submit"
-              className="app-button primary"
-              style={{ padding: "0.5rem 1.25rem" }}
-            >
-              Join
-            </button>
-          </form>
-        </div>
+      <div style={{ marginBottom: "4rem" }}>
+        <h1 className="notion-title" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          Arena Lobby <Zap size={32} color="#E2B714" fill="#E2B714" />
+        </h1>
+        <p className="notion-p" style={{ opacity: 0.6 }}>Compete with others in real-time. Share your room code to invite friends.</p>
       </div>
 
-      <style jsx global>{`
-        .hover-card:hover {
-          background: var(--bg-hover);
-          transform: translateY(-2px);
-          border-color: var(--foreground-muted) !important;
-        }
-      `}</style>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+        {/* Join Section */}
+        <section className="app-card" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "1.5rem" }}>
+            <Users size={20} color="#2383E2" />
+            <h3 className="notion-h3" style={{ margin: 0 }}>Join a Room</h3>
+          </div>
+          <p style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", marginBottom: "1.5rem" }}>
+            Enter a room code to join an existing race.
+          </p>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <input 
+              type="text" 
+              placeholder="e.g. akz0c"
+              className="app-input"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value.toLowerCase())}
+              onKeyDown={(e) => e.key === "Enter" && joinRoom(roomId)}
+            />
+            <button className="app-button primary" style={{ width: "fit-content", padding: "0 1.5rem" }} onClick={() => joinRoom(roomId)}>
+              Join
+            </button>
+          </div>
+        </section>
+
+        {/* Create Section */}
+        <section className="app-card" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "1.5rem" }}>
+            <Plus size={20} color="#2383E2" />
+            <h3 className="notion-h3" style={{ margin: 0 }}>Create Room</h3>
+          </div>
+          <p style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", marginBottom: "1.5rem" }}>
+            Setup a new arena and challenge your friends.
+          </p>
+          
+          <button className="app-button primary" onClick={createQuickRoom}>
+            Create Private Arena
+          </button>
+        </section>
+      </div>
+
+      <div style={{ marginTop: "4rem" }}>
+        <h3 className="notion-h3" style={{ marginBottom: "1.5rem" }}>Available Themes</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
+          {THEME_PACKS.slice(0, 4).map(theme => (
+             <div key={theme.id} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.9rem", opacity: 0.7 }}>
+                {theme.category === "TECH" && <Terminal size={14} />}
+                {theme.category === "LITERATURE" && <BookOpen size={14} />}
+                {theme.category === "QUOTES" && <Quote size={14} />}
+                {theme.category === "POETRY" && <Feather size={14} />}
+                <span>{theme.title}</span>
+             </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

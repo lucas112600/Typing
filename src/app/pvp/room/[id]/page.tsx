@@ -4,9 +4,10 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings, Terminal, BookOpen, Quote, Feather, Check } from "lucide-react";
 import audioManager from "@/lib/audioManager";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { THEME_PACKS, ThemeText } from "@/lib/themes";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,11 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   
   const [userId] = useState(() => Math.random().toString(36).substring(2, 9));
   const [players, setPlayers] = useState<Player[]>([]);
-  const [targetText, setTargetText] = useState("The quick brown fox jumps over the lazy dog.");
-  const [title, setTitle] = useState("Warm-up Race");
+  const [targetText, setTargetText] = useState(THEME_PACKS[0].text);
+  const [title, setTitle] = useState(THEME_PACKS[0].title);
   const [gameState, setGameState] = useState<"LOADING" | "LOBBY" | "STARTING" | "RACING">("LOADING");
   const [countdown, setCountdown] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
   
   // Typing State
   const [value, setValue] = useState("");
@@ -47,8 +49,16 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
 
+  // Caret position
+  const [caretPos, setCaretPos] = useState({ left: 0, top: 0 });
+
   const inputRef = useRef<HTMLInputElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
+  const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
+
+  // Host detection: First person in the players list
+  const isHost = players.length > 0 && players[0].id === userId;
 
   useEffect(() => {
     const channel = supabase.channel(`room:${roomId}`, {
@@ -73,8 +83,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           finished: p.finished || false,
         }));
         setPlayers(formattedPlayers);
-        
-        // If we were loading, we are now synced
         setGameState(current => current === "LOADING" ? "LOBBY" : current);
       })
       .on("broadcast", { event: "race_event" }, ({ payload }) => {
@@ -85,7 +93,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           setGameState("RACING");
           setStartTime(Date.now());
           setTimeout(() => inputRef.current?.focus(), 100);
-        } else if (payload.type === "TEXT_UPDATED") {
+        } else if (payload.type === "THEME_UPDATED") {
           setTargetText(payload.text);
           setTitle(payload.title);
         }
@@ -106,13 +114,42 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     return () => {
       channel.unsubscribe();
     };
-  }, [roomId, userId, nickname]); // gameState is used via functional update in setGameState, so no dependency needed there
+  }, [roomId, userId, nickname]);
 
   useEffect(() => {
     if (audioManager) {
       audioManager.setVolume(soundVolume);
     }
   }, [soundVolume]);
+
+  const updateCaretPosition = useCallback(() => {
+    const index = value.length;
+    const charEl = charRefs.current[index];
+    if (charEl && textContainerRef.current) {
+      const parentRect = textContainerRef.current.getBoundingClientRect();
+      const charRect = charEl.getBoundingClientRect();
+      setCaretPos({
+        left: charRect.left - parentRect.left,
+        top: charRect.top - parentRect.top,
+      });
+    } else if (index === targetText.length && index > 0) {
+      const lastCharEl = charRefs.current[index - 1];
+      if (lastCharEl && textContainerRef.current) {
+        const parentRect = textContainerRef.current.getBoundingClientRect();
+        const charRect = lastCharEl.getBoundingClientRect();
+        setCaretPos({
+          left: charRect.right - parentRect.left,
+          top: charRect.top - parentRect.top,
+        });
+      }
+    }
+  }, [value, targetText.length]);
+
+  useEffect(() => {
+    updateCaretPosition();
+    window.addEventListener("resize", updateCaretPosition);
+    return () => window.removeEventListener("resize", updateCaretPosition);
+  }, [updateCaretPosition]);
 
   const toggleReady = useCallback(async () => {
     if (!channelRef.current) return;
@@ -147,6 +184,23 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
        }, 5000);
     }
   }, [players, userId, nickname]);
+
+  const changeTheme = (theme: ThemeText) => {
+    if (!isHost || !channelRef.current) return;
+    setTargetText(theme.text);
+    setTitle(theme.title);
+    setShowSettings(false);
+    
+    channelRef.current.send({
+      type: "broadcast",
+      event: "race_event",
+      payload: { 
+        type: "THEME_UPDATED", 
+        text: theme.text, 
+        title: theme.title 
+      }
+    });
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") router.push("/pvp");
@@ -207,22 +261,32 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
   const renderText = () => {
     return targetText.split("").map((char, index) => {
-      let color = "var(--foreground-muted)";
-      let opacity = 0.3;
-      let bg = "transparent";
+      let state: "upcoming" | "correct" | "wrong" = "upcoming";
 
       if (index < value.length) {
-        const isCorrect = value[index] === char;
-        color = isCorrect ? "var(--foreground)" : "var(--foreground-danger)";
-        opacity = 1;
-        bg = isCorrect ? "transparent" : "rgba(235, 87, 87, 0.2)";
+        state = value[index] === char ? "correct" : "wrong";
       }
 
-      const isCursor = index === value.length && gameState === "RACING" && !isFinished;
+      const color = state === "correct" ? "var(--foreground)" :
+                    state === "upcoming" ? "var(--foreground-muted)" :
+                    "var(--foreground-danger)";
+      const opacity = state === "upcoming" ? 0.3 : 1;
+      const bg = state === "wrong" ? "rgba(235, 87, 87, 0.2)" : "transparent";
 
       return (
-        <span key={index} style={{ color, opacity, backgroundColor: bg, position: "relative" }}>
-          {isCursor && <span className="cursor-block" />}
+        <span 
+          key={index} 
+          ref={el => { charRefs.current[index] = el; }}
+          className={state === "correct" ? "char-pop" : ""}
+          style={{ 
+            color, 
+            opacity, 
+            backgroundColor: bg, 
+            position: "relative",
+            display: "inline-block",
+            transition: "all 0.15s cubic-bezier(0.4, 0, 0.2, 1)"
+          }}
+        >
           {char === " " ? "\u00A0" : char}
         </span>
       );
@@ -260,6 +324,11 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>{gameState === "LOADING" ? "Connecting..." : title}</h2>
         </div>
         <div style={{ display: "flex", gap: "1rem" }}>
+           {isHost && gameState === "LOBBY" && (
+             <button onClick={() => setShowSettings(!showSettings)} className="app-button" style={{ width: "fit-content", padding: "0.5rem" }}>
+               <Settings size={20} />
+             </button>
+           )}
            {gameState === "LOBBY" && (
              <button 
                onClick={toggleReady}
@@ -274,10 +343,34 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
              style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--foreground-muted)", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}
            >
              <ArrowLeft size={16} />
-             <span>Exit to Home</span>
+             <span>Exit</span>
            </button>
         </div>
       </div>
+
+      {showSettings && isHost && (
+        <div className="animate-fade-in" style={{ marginBottom: "2rem", padding: "1.5rem", background: "var(--bg-secondary)", borderRadius: "12px", border: "1px solid var(--border)" }}>
+           <h4 className="notion-h3" style={{ marginTop: 0 }}>Room Theme</h4>
+           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem", marginTop: "1rem" }}>
+              {THEME_PACKS.map(theme => (
+                <button 
+                  key={theme.id} 
+                  className="app-button" 
+                  style={{ 
+                    border: "1px solid var(--border)", 
+                    padding: "0.5rem", 
+                    justifyContent: "center",
+                    position: "relative"
+                  }} 
+                  onClick={() => changeTheme(theme)}
+                >
+                  {theme.title}
+                  {title === theme.title && <Check size={14} style={{ position: "absolute", top: 2, right: 2 }} color="#2383E2" />}
+                </button>
+              ))}
+           </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: "4rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {players.map(player => (
@@ -308,9 +401,11 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         )}
 
         <div 
+          ref={textContainerRef}
           className="mono-text" 
           onClick={() => inputRef.current?.focus()}
           style={{
+            position: "relative",
             fontSize: getFontSizeRem(),
             lineHeight: "1.8",
             wordBreak: "break-all",
@@ -319,6 +414,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             transition: "opacity 0.5s ease"
           }}
         >
+          <div className="smooth-caret" style={{ left: caretPos.left, top: caretPos.top }} />
           {renderText()}
         </div>
 
@@ -334,19 +430,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           autoFocus spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off"
         />
       </div>
-
-      <style jsx global>{`
-        .cursor-block {
-          position: absolute;
-          left: 0;
-          bottom: 0;
-          width: 100%;
-          height: 2px;
-          background: #2383E2;
-          animation: blink 1s step-end infinite;
-        }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-      `}</style>
     </div>
   );
 }
