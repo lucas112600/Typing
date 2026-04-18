@@ -135,7 +135,7 @@ export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | nul
         <div className="animate-step-in stagger-4" style={{ minHeight: "120px", width: "100%", maxWidth: "800px", display: "flex", justifyContent: "center", alignItems: "center", textAlign: "center", zIndex: 10 }}>
           {mode === "DAILY" && (
              <div>
-               <div style={{ fontSize: "12px", letterSpacing: "2px", fontWeight: 900, opacity: 0.6, marginBottom: "0.5rem" }}>[ TODAY'S ARTICLE ]</div>
+               <div style={{ fontSize: "12px", letterSpacing: "2px", fontWeight: 900, opacity: 0.6, marginBottom: "0.5rem" }}>[ TODAY&apos;S ARTICLE ]</div>
                {newsItem ? (
                  <>
                    <h2 style={{ fontSize: "1.5rem", fontWeight: 900, textTransform: "uppercase", marginBottom: "0.5rem" }}>{newsItem.title}</h2>

@@ -38,6 +38,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem("TYPING_CONFIG");
       if (stored) {
         const parsed = JSON.parse(stored);
+        // eslint-disable-next-line
         if (parsed.fontSize) setFontSizeState(parsed.fontSize);
         if (parsed.cursorStyle) setCursorStyleState(parsed.cursorStyle);
         if (parsed.stopOnError !== undefined) setStopOnErrorState(parsed.stopOnError);
