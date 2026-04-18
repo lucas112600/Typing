@@ -70,7 +70,7 @@ export default function StatsPage() {
              
              {/* Points */}
              {dataPoints.map((val, i) => {
-                const x = (i / (dataPoints.length - 1)) * 800;
+                const x = dataPoints.length === 1 ? 400 : (i / (dataPoints.length - 1)) * 800;
                 const y = 300 - (((val - min) / range) * 200 + 50);
                 return (
                   <rect key={i} x={x - 4} y={y - 4} width="8" height="8" fill="var(--background)" stroke="var(--foreground)" strokeWidth="2" />
