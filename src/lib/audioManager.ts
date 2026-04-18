@@ -22,7 +22,7 @@ class AudioManager {
   private init() {
     if (this.initialized) return;
     
-    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass = (window.AudioContext || (window as unknown as Window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext) as typeof AudioContext;
     if (!AudioContextClass) return;
 
     this.context = new AudioContextClass();
