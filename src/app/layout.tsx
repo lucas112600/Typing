@@ -5,7 +5,7 @@ import SystemStatus from "@/components/SystemStatus";
 import { ConfigProvider } from "@/context/ConfigContext";
 
 export const metadata: Metadata = {
-  title: "Typing | Notion Style",
+  title: "Typing",
   description: "Minimalist procedural typing practice",
 };
 
