@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { mockData, Category1, Category2, Entry } from "@/lib/mockData";
-import { generateWikiText } from "@/lib/generator";
-import { ArrowLeft, BookOpen, FileText, Bot, Search } from "lucide-react";
+import { ArrowLeft, BookOpen, FileText, Search } from "lucide-react";
 
 export default function ExplorePage() {
   const router = useRouter();
   const [cat1, setCat1] = useState<Category1>("ZH_CHINESE");
   const [cat2, setCat2] = useState<Category2>("NEWS_FEED");
-  const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -44,7 +42,7 @@ export default function ExplorePage() {
       <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>📚</div>
       <h1 className="notion-title">Database Explorer</h1>
       <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
-        Browse through curated articles or use the AI Forge to synthesize new custom typing tasks.
+        Browse through curated articles for your typing practice.
       </p>
 
       {/* Language Tabs */}
@@ -86,109 +84,65 @@ export default function ExplorePage() {
             <BookOpen size={18} color="var(--foreground-muted)" />
             <span>Classic Literature</span>
           </button>
-
-          <button
-            className="app-button"
-            style={{ backgroundColor: cat2 === "AI_FORGE" ? "var(--surface-active)" : "transparent" }}
-            onClick={() => setCat2("AI_FORGE")}
-          >
-            <Bot size={18} color="var(--foreground-muted)" />
-            <span>Neural AI Forge</span>
-          </button>
       </div>
 
       {/* Main Content Area */}
       <h2 className="notion-h2">
-        {cat2 === "NEWS_FEED" ? "Table: Articles" : cat2 === "ARCHIVE" ? "Table: Classics" : "Action: AI Generation"}
+        {cat2 === "NEWS_FEED" ? "Table: Articles" : "Table: Classics"}
       </h2>
 
-      {cat2 === "AI_FORGE" ? (
-        <div style={{ padding: "1rem 0" }}>
-          <p className="notion-p">Provide a topical prompt to generate a custom practice text natively.</p>
-          <input 
-            className="app-input"
-            disabled={generating}
-            placeholder="Type a topic (e.g. History of Computing) and press Enter..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const val = e.currentTarget.value;
-                if (!val.trim()) return;
-                setGenerating(true);
-                SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
-                
-                // Using an async wrapper inside the keydown handler
-                const fetchGen = async () => {
-                   try {
-                     const genEntry = await generateWikiText(cat1 === "ZH_CHINESE" ? "zh" : "en", "HARD", val);
-                     setGenerating(false);
-                     SystemLogPubSub.publish("GENERATION_COMPLETE");
-                     setTimeout(() => handleSelect(genEntry), 50);
-                   } catch {
-                     setGenerating(false);
-                   }
-                };
-                
-                fetchGen();
-                e.currentTarget.value = "";
-              }
-            }}
-          />
-          {generating && <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", marginTop: "0.5rem" }}>Synthesizing text...</div>}
+      <div>
+        <div style={{ position: "relative", marginBottom: "1rem" }}>
+            <Search size={16} color="var(--foreground-muted)" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+            <input 
+              className="app-input" 
+              placeholder="Search database..." 
+              style={{ paddingLeft: "36px" }}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
         </div>
-      ) : (
-        <div>
-          <div style={{ position: "relative", marginBottom: "1rem" }}>
-             <Search size={16} color="var(--foreground-muted)" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
-             <input 
-               className="app-input" 
-               placeholder="Search database..." 
-               style={{ paddingLeft: "36px" }}
-               value={search}
-               onChange={e => setSearch(e.target.value)}
-             />
-          </div>
-          
-          {entries.length === 0 ? (
-             <p className="notion-p" style={{ color: "var(--foreground-muted)" }}>No matching results found.</p>
-          ) : (
-             <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", overflow: "hidden" }}>
-                {entries.map((entry, idx) => (
-                  <div 
-                    key={entry.id}
-                    className="app-button"
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      padding: "0.75rem 1rem",
-                      borderBottom: idx !== entries.length - 1 ? "1px solid var(--border)" : "none",
-                      borderRadius: 0,
-                      gap: "1rem",
-                      width: "100%"
-                    }}
-                    onClick={() => handleSelect(entry)}
-                  >
-                    <div style={{ 
-                      fontSize: "0.75rem", 
-                      padding: "2px 6px", 
-                      borderRadius: "4px",
-                      border: "1px solid var(--border)",
-                      color: "var(--foreground-muted)",
-                      backgroundColor: "var(--surface)",
-                      minWidth: "60px",
-                      textAlign: "center"
-                    }}>
-                      {entry.difficulty}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 500, marginBottom: "2px" }}>{entry.title}</div>
-                      <div style={{ color: "var(--foreground-muted)", fontSize: "0.85rem" }}>Source: {entry.source} • {entry.wordCount} words</div>
-                    </div>
+        
+        {entries.length === 0 ? (
+            <p className="notion-p" style={{ color: "var(--foreground-muted)" }}>No matching results found.</p>
+        ) : (
+            <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+              {entries.map((entry, idx) => (
+                <div 
+                  key={entry.id}
+                  className="app-button"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    padding: "0.75rem 1rem",
+                    borderBottom: idx !== entries.length - 1 ? "1px solid var(--border)" : "none",
+                    borderRadius: 0,
+                    gap: "1rem",
+                    width: "100%"
+                  }}
+                  onClick={() => handleSelect(entry)}
+                >
+                  <div style={{ 
+                    fontSize: "0.75rem", 
+                    padding: "2px 6px", 
+                    borderRadius: "4px",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground-muted)",
+                    backgroundColor: "var(--surface)",
+                    minWidth: "60px",
+                    textAlign: "center"
+                  }}>
+                    {entry.difficulty}
                   </div>
-                ))}
-             </div>
-          )}
-        </div>
-      )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500, marginBottom: "2px" }}>{entry.title}</div>
+                    <div style={{ color: "var(--foreground-muted)", fontSize: "0.85rem" }}>Source: {entry.source} • {entry.wordCount} words</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+        )}
+      </div>
 
     </div>
   );

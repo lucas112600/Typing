@@ -1,5 +1,5 @@
 export type Category1 = "ZH_CHINESE" | "EN_ENGLISH";
-export type Category2 = "NEWS_FEED" | "AI_FORGE" | "ARCHIVE";
+export type Category2 = "NEWS_FEED" | "ARCHIVE";
 
 export interface Entry {
   id: string;
@@ -19,7 +19,7 @@ export const mockData: Record<Category1, Record<Category2, Entry[]>> = {
       { id: "zh-n-4", difficulty: "EASY", title: "健康生活：規律運動", wordCount: 88, source: "HEALTH WEEKLY", text: "保持規律的運動習慣不僅能增強免疫力，還能有效減輕心理壓力。專家建議每天至少進行三十分鐘的中等強度運動，幫助身心維持在最佳狀態。" },
       { id: "zh-n-5", difficulty: "HARD", title: "量子計算的原理解析", wordCount: 205, source: "SCIENCE NOW", text: "量子計算利用量子力學中的疊加與量子糾纏特性，能夠在極短的時間內解決傳統電腦需要數千年才能運算完畢的複雜問題。這種突破性的計算能力將對密碼學、材料科學與新藥開發產生顛覆性的影響。目前的挑戰在於如何維持量子位元的穩定性並減少運作時的錯誤率。" }
     ],
-    AI_FORGE: [],
+
     ARCHIVE: [
       { id: "zh-a-1", difficulty: "CORE", title: "出師表 (節錄)", wordCount: 120, source: "CLASSIC", text: "臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州疲弊，此誠危急存亡之秋也。然侍衛之臣不懈於內，忠志之士忘身於外者，蓋追先帝之殊遇，欲報之於陛下也。" },
       { id: "zh-a-2", difficulty: "EASY", title: "春曉", wordCount: 20, source: "POETRY", text: "春眠不覺曉，處處聞啼鳥。夜來風雨聲，花落知多少。" },
@@ -36,7 +36,7 @@ export const mockData: Record<Category1, Record<Category2, Entry[]>> = {
       { id: "en-n-4", difficulty: "EASY", title: "Coffee Consumption Study", wordCount: 48, source: "HEALTH WEEKLY", text: "A new study indicates that moderate coffee consumption may be linked to improved long-term cognitive health. Researchers found that drinking two to three cups daily could offer neuroprotective benefits." },
       { id: "en-n-5", difficulty: "HARD", title: "Cryptographic Security", wordCount: 78, source: "SCIENCE NOW", text: "As quantum computing continues to advance, traditional RSA encryption methods face imminent obsolescence. Security researchers are urgently developing Post-Quantum Cryptography algorithms based on lattice structures and isogenies to ensure that encrypted communications remain secure against future computational threats." }
     ],
-    AI_FORGE: [],
+
     ARCHIVE: [
       { id: "en-a-1", difficulty: "CORE", title: "Declaration of Independence", wordCount: 71, source: "CLASSIC", text: "When in the Course of human events, it becomes necessary for one people to dissolve the political bands which have connected them with another, and to assume among the powers of the earth, the separate and equal station to which the Laws of Nature and of Nature's God entitle them." },
       { id: "en-a-2", difficulty: "EASY", title: "To Be or Not To Be", wordCount: 55, source: "LITERATURE", text: "To be, or not to be, that is the question: Whether 'tis nobler in the mind to suffer The slings and arrows of outrageous fortune, Or to take Arms against a Sea of troubles, And by opposing end them." },
