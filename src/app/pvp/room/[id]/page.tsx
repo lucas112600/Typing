@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import PartySocket from "partysocket";
+import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
 import { ArrowLeft } from "lucide-react";
 import audioManager from "@/lib/audioManager";
@@ -19,13 +19,12 @@ interface Player {
 export default function PvPRoom({ params }: { params: Promise<{ id: string }> }) {
   const { id: roomId } = use(params);
   const router = useRouter();
-  const { fontSize, stopOnError, soundEnabled, soundVolume } = useConfig();
+  const { fontSize, stopOnError, soundEnabled, soundVolume, nickname } = useConfig();
   
-  // Game State
-  const [socket, setSocket] = useState<PartySocket | null>(null);
+  const [userId] = useState(() => Math.random().toString(36).substring(2, 9));
   const [players, setPlayers] = useState<Player[]>([]);
-  const [targetText, setTargetText] = useState("");
-  const [title, setTitle] = useState("Loading...");
+  const [targetText, setTargetText] = useState("The quick brown fox jumps over the lazy dog.");
+  const [title, setTitle] = useState("Warm-up Race");
   const [gameState, setGameState] = useState<"LOADING" | "LOBBY" | "STARTING" | "RACING">("LOADING");
   const [countdown, setCountdown] = useState(0);
   
@@ -37,59 +36,67 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [isFinished, setIsFinished] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
-    const ws = new PartySocket({
-      host,
-      room: roomId,
+    const channel = supabase.channel(`room:${roomId}`, {
+      config: {
+        presence: {
+          key: userId,
+        },
+      },
     });
 
-    ws.addEventListener("message", (e) => {
-      const data = JSON.parse(e.data);
-      switch (data.type) {
-        case "SYNC_ROOM":
-          setPlayers(data.players);
-          setTargetText(data.text);
-          setTitle(data.title);
-          setGameState(data.state);
-          break;
-        case "UPDATE_PLAYERS":
-          setPlayers(data.players);
-          break;
-        case "START_COUNTDOWN":
+    channelRef.current = channel;
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const formattedPlayers: Player[] = Object.values(state).flat().map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          ready: p.ready,
+          progress: p.progress || 0,
+          wpm: p.wpm || 0,
+          finished: p.finished || false,
+        }));
+        setPlayers(formattedPlayers);
+        
+        // If we were loading, we are now synced
+        if (gameState === "LOADING") {
+          setGameState("LOBBY");
+        }
+      })
+      .on("broadcast", { event: "race_event" }, ({ payload }) => {
+        if (payload.type === "START_COUNTDOWN") {
           setGameState("STARTING");
           setCountdown(5);
-          const interval = setInterval(() => {
-            setCountdown(prev => {
-              if (prev <= 1) {
-                clearInterval(interval);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-          break;
-        case "START_RACE":
+        } else if (payload.type === "START_RACE") {
           setGameState("RACING");
           setStartTime(Date.now());
-          inputRef.current?.focus();
-          break;
-        case "TEXT_UPDATED":
-          setTargetText(data.text);
-          setTitle(data.title);
-          break;
-      }
-    });
-    
-    ws.addEventListener("open", () => {
-      console.log("PartySocket connected to room:", roomId);
-      ws.send(JSON.stringify({ type: "REQUEST_SYNC" }));
-    });
+          setTimeout(() => inputRef.current?.focus(), 100);
+        } else if (payload.type === "TEXT_UPDATED") {
+          setTargetText(payload.text);
+          setTitle(payload.title);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({
+            id: userId,
+            name: nickname || `Player ${userId.slice(0, 4)}`,
+            ready: false,
+            progress: 0,
+            wpm: 0,
+            finished: false,
+          });
+        }
+      });
 
-    setSocket(ws);
-    return () => ws.close();
-  }, [roomId]);
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roomId, userId, nickname]);
 
   useEffect(() => {
     if (audioManager) {
@@ -97,32 +104,55 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     }
   }, [soundVolume]);
 
-  const toggleReady = () => {
-    const me = players.find(p => p.id === socket?.id);
-    socket?.send(JSON.stringify({
-      type: "SET_READY",
-      ready: !me?.ready
-    }));
+  const toggleReady = async () => {
+    const me = players.find(p => p.id === userId);
+    const newReady = !me?.ready;
+    
+    await channelRef.current.track({
+      id: userId,
+      name: nickname || `Player ${userId.slice(0, 4)}`,
+      ready: newReady,
+      progress: 0,
+      wpm: 0,
+      finished: false,
+    });
+
+    // Simple host logic: if everyone is ready and we are the first player, start countdown
+    const otherPlayers = players.filter(p => p.id !== userId);
+    const allOthersReady = otherPlayers.every(p => p.ready);
+    
+    if (newReady && allOthersReady && players.length >= 1) {
+       // Broadcast start
+       channelRef.current.send({
+         type: "broadcast",
+         event: "race_event",
+         payload: { type: "START_COUNTDOWN" }
+       });
+
+       // Trigger start race after 5s
+       setTimeout(() => {
+         channelRef.current.send({
+           type: "broadcast",
+           event: "race_event",
+           payload: { type: "START_RACE" }
+         });
+       }, 5000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") router.push("/pvp");
 
-    // Play sounds on KeyDown for immediate feedback
     if (soundEnabled && !isFinished && gameState === "RACING" && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      if (e.key === " ") {
-        audioManager?.play("space");
-      } else {
-        audioManager?.play("standard");
-      }
+      if (e.key === " ") audioManager?.play("space");
+      else audioManager?.play("standard");
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (gameState !== "RACING" || isFinished) return;
     const val = e.target.value;
 
-    // Basic error checking (matching practice logic)
     if (!isComposing) {
         if (stopOnError) {
             if (val.length > value.length && targetText.substring(0, val.length) !== val) {
@@ -139,45 +169,34 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
     setValue(val);
 
-    // Sync progress to server
-    const progress = (val.length / targetText.length) * 100;
+    const progress = Math.min(100, Math.round((val.length / targetText.length) * 100));
     const timeMs = Date.now() - (startTime || 0);
-    const wpm = (val.length / 5) / (timeMs / 60000);
+    const wpm = Math.round((val.length / 5) / (timeMs / 60000)) || 0;
     
-    socket?.send(JSON.stringify({
-      type: "UPDATE_PROGRESS",
-      progress: Math.min(100, Math.round(progress)),
-      wpm: Math.round(wpm)
-    }));
+    // Sync progress via Presence (throttled by track logic automatically in Supabase usually)
+    // To avoid too many track calls, we can broadcast instead for progress
+    await channelRef.current.track({
+      id: userId,
+      name: nickname || `Player ${userId.slice(0, 4)}`,
+      ready: true,
+      progress,
+      wpm,
+      finished: val.length >= targetText.length,
+    });
 
     if (val.length >= targetText.length && !isComposing) {
       setIsFinished(true);
-      socket?.send(JSON.stringify({ type: "FINISH" }));
+      if (soundEnabled) audioManager?.play("finish");
 
-      // Submit to global leaderboard
-      const finalWpm = Math.round(wpm);
+      // Submit to global leaderboard DB
+      const finalWpm = wpm;
       const finalAccuracy = Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100));
       
-      const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
-      const globalSocket = new PartySocket({
-        host,
-        room: "global",
+      await supabase.from("leaderboards").insert({
+        name: nickname || `Player ${userId.slice(0, 4)}`,
+        wpm: finalWpm,
+        accuracy: finalAccuracy
       });
-      
-      globalSocket.addEventListener("open", () => {
-        globalSocket.send(JSON.stringify({
-          type: "SUBMIT_SCORE",
-          name: localStorage.getItem("TYPING_NICKNAME") || `Player ${socket?.id.slice(0, 4)}`,
-          wpm: finalWpm,
-          accuracy: finalAccuracy
-        }));
-        // Close after submission
-        setTimeout(() => globalSocket.close(), 1000);
-      });
-      
-      if (soundEnabled) {
-        audioManager?.play("finish");
-      }
     }
   };
 
@@ -214,52 +233,51 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     }
   };
 
+  // Synchronize countdown locally as well for smoother UI
+  useEffect(() => {
+    let timer: any;
+    if (gameState === "STARTING" && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [gameState, countdown]);
+
   return (
     <div className="notion-page animate-fade-in" style={{ maxWidth: "1000px", margin: "0 auto", padding: "4rem 2rem" }}>
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
         <div>
           <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             PvP Room / {roomId}
           </div>
-          <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>{title}</h2>
+          <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>{gameState === "LOADING" ? "Connecting..." : title}</h2>
         </div>
         <div style={{ display: "flex", gap: "1rem" }}>
            {gameState === "LOBBY" && (
              <button 
                onClick={toggleReady}
-               className={`app-button ${players.find(p => p.id === socket?.id)?.ready ? "secondary" : "primary"}`}
+               className={`app-button ${players.find(p => p.id === userId)?.ready ? "secondary" : "primary"}`}
                style={{ padding: "0.5rem 1.5rem" }}
              >
-               {players.find(p => p.id === socket?.id)?.ready ? "Unready" : "Ready Up"}
+               {players.find(p => p.id === userId)?.ready ? "Unready" : "Ready Up"}
              </button>
            )}
            <button 
              onClick={() => router.push("/")} 
-             style={{ 
-               display: "flex", 
-               alignItems: "center", 
-               gap: "0.4rem", 
-               color: "var(--foreground-muted)", 
-               fontSize: "0.9rem",
-               background: "none",
-               border: "none",
-               cursor: "pointer"
-             }}
+             style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--foreground-muted)", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}
            >
              <ArrowLeft size={16} />
              <span>Exit to Home</span>
            </button>
-           <button onClick={() => router.push("/pvp")} style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}>Quit to Lobby</button>
         </div>
       </div>
 
-      {/* Progress Bars (Separated) */}
       <div style={{ marginBottom: "4rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {players.map(player => (
           <div key={player.id} style={{ position: "relative" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.5rem", color: player.id === socket?.id ? "var(--foreground)" : "var(--foreground-muted)" }}>
-              <span>{player.name} {player.id === socket?.id && "(You)"} {player.finished && "🏁"}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.5rem", color: player.id === userId ? "var(--foreground)" : "var(--foreground-muted)" }}>
+              <span>{player.name} {player.id === userId && "(You)"} {player.finished && "🏁"}</span>
               <span>{player.wpm} WPM · {player.progress}%</span>
             </div>
             <div style={{ height: "4px", background: "var(--bg-secondary)", borderRadius: "2px", overflow: "hidden" }}>
@@ -267,9 +285,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
                 style={{ 
                   height: "100%", 
                   width: `${player.progress}%`, 
-                  background: player.id === socket?.id ? "#2383E2" : "var(--foreground-muted)",
-                  transition: "width 0.3s ease-out",
-                  boxShadow: player.id === socket?.id ? "0 0 10px rgba(35, 131, 226, 0.5)" : "none"
+                  background: player.id === userId ? "#2383E2" : "var(--foreground-muted)",
+                  transition: "width 0.3s ease-out"
                 }} 
               />
             </div>
@@ -277,7 +294,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         ))}
       </div>
 
-      {/* Main Content */}
       <div style={{ position: "relative", minHeight: "300px" }}>
         {gameState === "STARTING" && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, background: "rgba(255,255,255,0.01)", backdropFilter: "blur(4px)" }}>
@@ -313,23 +329,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         />
       </div>
 
-      {/* Results */}
-      {isFinished && (
-        <div className="animate-fade-in" style={{ marginTop: "4rem", padding: "2rem", border: "1px solid var(--border)", borderRadius: "12px" }}>
-          <h3 style={{ margin: "0 0 1rem 0" }}>Race Complete!</h3>
-          <div style={{ display: "flex", gap: "2rem" }}>
-             <div>
-               <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem" }}>SPEED</div>
-               <div style={{ fontSize: "2rem", fontWeight: 700 }}>{players.find(p => p.id === socket?.id)?.wpm} <span style={{ fontSize: "0.8rem" }}>WPM</span></div>
-             </div>
-             <div>
-               <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem" }}>ACCURACY</div>
-               <div style={{ fontSize: "2rem", fontWeight: 700 }}>{Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100))}%</div>
-             </div>
-          </div>
-        </div>
-      )}
-
       <style jsx global>{`
         .cursor-block {
           position: absolute;
@@ -340,10 +339,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           background: #2383E2;
           animation: blink 1s step-end infinite;
         }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
       `}</style>
     </div>
   );

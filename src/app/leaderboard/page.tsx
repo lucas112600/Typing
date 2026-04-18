@@ -2,140 +2,122 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import PartySocket from "partysocket";
-import { Trophy, ArrowLeft, Clock, Zap, Target } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { ArrowLeft, Trophy, Medal, Clock, Zap } from "lucide-react";
 
 interface ScoreRecord {
+  id: string;
   name: string;
   wpm: number;
   accuracy: number;
-  date: string;
+  created_at: string;
 }
 
 export default function LeaderboardPage() {
-  const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<ScoreRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const fetchLeaderboard = async () => {
+    const { data, error } = await supabase
+      .from("leaderboards")
+      .select("*")
+      .order("wpm", { ascending: false })
+      .limit(50);
+    
+    if (data) {
+      setLeaderboard(data);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // Connect to a dedicated 'global' room for high scores
-    const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
-    const socket = new PartySocket({
-      host,
-      room: "global", // All users share this ranking room
-    });
+    fetchLeaderboard();
 
-    socket.addEventListener("message", (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === "LEADERBOARD_UPDATE") {
-        setLeaderboard(data.leaderboard);
-        setLoading(false);
-      }
-    });
+    // Subscribe to real-time updates when new scores are inserted
+    const channel = supabase
+      .channel("leaderboard_updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leaderboards" },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
 
-    // Request leaderboard on connect
-    socket.addEventListener("open", () => {
-      socket.send(JSON.stringify({ type: "GET_LEADERBOARD" }));
-    });
-
-    return () => socket.close();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
-    <div className="notion-page animate-fade-in" style={{ maxWidth: "800px", margin: "0 auto", padding: "4rem 2rem" }}>
+    <div className="notion-page animate-fade-in" style={{ maxWidth: "900px", margin: "0 auto", padding: "4rem 2rem" }}>
       <nav style={{ marginBottom: "2rem" }}>
         <button 
           onClick={() => router.push("/")}
-          style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: "0.5rem", 
-            background: "none", 
-            border: "none", 
-            color: "var(--foreground-muted)", 
-            cursor: "pointer",
-            fontSize: "0.9rem"
-          }}
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "none", border: "none", color: "var(--foreground-muted)", cursor: "pointer", fontSize: "0.9rem" }}
         >
           <ArrowLeft size={16} />
           <span>Back to Workspace</span>
         </button>
       </nav>
 
-      <header style={{ marginBottom: "4rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#E2B714", marginBottom: "1rem" }}>
-          <Trophy size={24} />
-          <span style={{ fontWeight: 600, fontSize: "1rem", letterSpacing: "0.1em" }}>HALL OF FAME</span>
+      <header style={{ marginBottom: "4rem", textAlign: "center" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 1rem", borderRadius: "100px", background: "rgba(226, 183, 20, 0.1)", color: "#E2B714", fontSize: "0.8rem", fontWeight: 600, marginBottom: "1.5rem" }}>
+          <Trophy size={14} />
+          <span>GLOBAL RANKINGS</span>
         </div>
-        <h1 className="notion-h1" style={{ fontSize: "3.5rem", margin: 0 }}>Global Rankings</h1>
-        <p className="notion-p" style={{ opacity: 0.6 }}>The fastest typists in the solar system.</p>
+        <h1 className="notion-h1" style={{ fontSize: "4rem", letterSpacing: "-0.04em", margin: "0" }}>Hall of Fame</h1>
+        <p className="notion-p" style={{ fontSize: "1.2rem", opacity: 0.6 }}>The fastest typists in the digital realm.</p>
       </header>
 
       {loading ? (
-        <div style={{ padding: "4rem", textAlign: "center", color: "var(--foreground-muted)" }}>
-          Synchronizing with central database...
-        </div>
+        <div style={{ textAlign: "center", padding: "4rem", color: "var(--foreground-muted)" }}>Loading records...</div>
       ) : (
-        <div style={{ border: "1px solid var(--border)", borderRadius: "12px", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+        <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.95rem" }}>
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th style={{ padding: "1rem", fontWeight: 600, fontSize: "0.8rem", color: "var(--foreground-muted)" }}>RANK</th>
-                <th style={{ padding: "1rem", fontWeight: 600, fontSize: "0.8rem", color: "var(--foreground-muted)" }}>NAME</th>
-                <th style={{ padding: "1rem", fontWeight: 600, fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SPEED (WPM)</th>
-                <th style={{ padding: "1rem", fontWeight: 600, fontSize: "0.8rem", color: "var(--foreground-muted)" }}>ACCURACY</th>
-                <th style={{ padding: "1rem", fontWeight: 600, fontSize: "0.8rem", color: "var(--foreground-muted)" }}>DATE</th>
+              <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.02)" }}>
+                <th style={{ padding: "1.2rem", textAlign: "left", width: "80px", color: "var(--foreground-muted)" }}>RANK</th>
+                <th style={{ padding: "1.2rem", textAlign: "left" }}>USER</th>
+                <th style={{ padding: "1.2rem", textAlign: "center" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}><Zap size={14} /> WPM</div></th>
+                <th style={{ padding: "1.2rem", textAlign: "center" }}>ACCURACY</th>
+                <th style={{ padding: "1.2rem", textAlign: "right", color: "var(--foreground-muted)" }}><Clock size={14} style={{ display: "inline", marginRight: "4px" }} /> DATE</th>
               </tr>
             </thead>
             <tbody>
-              {leaderboard.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ padding: "4rem", textAlign: "center", color: "var(--foreground-muted)" }}>
-                    No records found. Be the first to claim a spot!
+              {leaderboard.map((record, index) => (
+                <tr key={record.id} className="leaderboard-row" style={{ borderBottom: index === leaderboard.length - 1 ? "none" : "1px solid var(--border)", transition: "background 0.2s ease" }}>
+                  <td style={{ padding: "1.2rem", fontWeight: 700 }}>
+                    {index === 0 && <Medal size={20} color="#E2B714" />}
+                    {index === 1 && <Medal size={20} color="#909090" />}
+                    {index === 2 && <Medal size={20} color="#AD8A56" />}
+                    {index > 2 && index + 1}
+                  </td>
+                  <td style={{ padding: "1.2rem", fontWeight: 600 }}>{record.name}</td>
+                  <td style={{ padding: "1.2rem", textAlign: "center", color: "#E2B714", fontWeight: 800, fontSize: "1.1rem" }}>{record.wpm}</td>
+                  <td style={{ padding: "1.2rem", textAlign: "center" }}>{record.accuracy}%</td>
+                  <td style={{ padding: "1.2rem", textAlign: "right", color: "var(--foreground-muted)", fontSize: "0.85rem" }}>
+                    {new Date(record.created_at).toLocaleDateString()}
                   </td>
                 </tr>
-              ) : (
-                leaderboard.map((record, index) => (
-                  <tr key={index} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }}>
-                    <td style={{ padding: "1rem", fontWeight: 800, color: index < 3 ? "#E2B714" : "var(--foreground-muted)" }}>
-                      #{index + 1}
-                    </td>
-                    <td style={{ padding: "1rem", fontWeight: 500 }}>{record.name}</td>
-                    <td style={{ padding: "1rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <Zap size={14} color="#E2B714" />
-                        <span style={{ fontSize: "1.1rem", fontWeight: 700 }}>{record.wpm}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "1rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--foreground-muted)" }}>
-                        <Target size={14} />
-                        <span>{record.accuracy}%</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "1rem", color: "var(--foreground-muted)", fontSize: "0.8rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <Clock size={12} />
-                        {new Date(record.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+              ))}
+              {leaderboard.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ padding: "4rem", textAlign: "center", color: "var(--foreground-muted)" }}>No records yet. Be the first!</td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       )}
 
-      <footer style={{ marginTop: "4rem", textAlign: "center", paddingBottom: "4rem" }}>
-        <button 
-          className="app-button primary" 
-          onClick={() => router.push("/pvp")}
-          style={{ padding: "0.75rem 2rem" }}
-        >
-          Compete Now
-        </button>
-      </footer>
+      <style jsx global>{`
+        .leaderboard-row:hover {
+          background: rgba(0, 0, 0, 0.02);
+        }
+      `}</style>
     </div>
   );
 }
