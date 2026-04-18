@@ -10,6 +10,7 @@ export default function HomeInteraction() {
   const router = useRouter();
   const [lang, setLang] = useState<"en" | "zh">("en");
   const [generating, setGenerating] = useState(false);
+  const [customWordCount, setCustomWordCount] = useState(300);
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_READY");
@@ -21,8 +22,11 @@ export default function HomeInteraction() {
     SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
 
     setTimeout(() => {
-      const diffLevels: Difficulty[] = ["EASY", "NORMAL", "HARD"];
-      const finalDiff = difficulty || diffLevels[Math.floor(Math.random() * diffLevels.length)];
+      let finalDiff: Difficulty = difficulty || "EASY";
+      if (!difficulty) {
+         const diffLevels: ("EASY" | "NORMAL" | "HARD")[] = ["EASY", "NORMAL", "HARD"];
+         finalDiff = diffLevels[Math.floor(Math.random() * diffLevels.length)];
+      }
       
       const practiceData = generateText(lang, finalDiff);
       
@@ -128,6 +132,26 @@ export default function HomeInteraction() {
            </div>
         </button>
 
+      </div>
+
+      {/* Target Length Settings */}
+      <h2 className="notion-h2">Custom Configuration</h2>
+      <p className="notion-p">Specify exactly the target text generation length.</p>
+      
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+         <input 
+            type="number" 
+            className="app-input" 
+            style={{ width: "100px" }} 
+            value={customWordCount} 
+            onChange={e => setCustomWordCount(Number(e.target.value))} 
+            min={10} 
+            max={5000} 
+         />
+         <span style={{ color: "var(--foreground-muted)" }}>Words per session</span>
+         <button className="app-button primary" style={{ width: "fit-content", padding: "0.5rem 1rem" }} onClick={() => handleStart(customWordCount)}>
+            Start Custom Task
+         </button>
       </div>
 
     </div>

@@ -3,7 +3,7 @@ export type Category2 = "NEWS_FEED" | "ARCHIVE";
 
 export interface Entry {
   id: string;
-  difficulty: "EASY" | "HARD" | "CORE";
+  difficulty: "EASY" | "HARD" | "CORE" | "CUSTOM" | string;
   title: string;
   wordCount: number;
   source: string;

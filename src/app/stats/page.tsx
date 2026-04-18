@@ -17,12 +17,13 @@ export default function StatsPage() {
     }, 0);
   }, []);
 
-  const dataPoints = sessions.length > 0 ? sessions.map(s => s.wpm) : [0];
-  const max = Math.max(...dataPoints, 10);
-  const min = Math.min(...dataPoints, 0);
+  const dataPoints = sessions.length > 0 ? sessions.map(s => s.wpm) : [];
+  const max = dataPoints.length > 0 ? Math.max(...dataPoints, 10) : 10;
+  const min = dataPoints.length > 0 ? Math.min(...dataPoints, 0) : 0;
   const range = max - min === 0 ? 1 : max - min;
   
   const generatePath = () => {
+    if (dataPoints.length === 0) return "";
     if (dataPoints.length === 1) return `M 0 150 L 800 150`;
     return dataPoints.map((val, i) => {
       const x = (i / (dataPoints.length - 1)) * 800;
@@ -75,17 +76,20 @@ export default function StatsPage() {
              <line x1="0" y1="150" x2="800" y2="150" stroke="var(--border)" strokeWidth="1" />
              <line x1="0" y1="250" x2="800" y2="250" stroke="var(--border)" strokeWidth="1" />
              
-             {/* Data Line */}
-             <path d={generatePath()} fill="none" stroke="var(--foreground)" strokeWidth="2.5" />
-             
-             {/* Points */}
-             {dataPoints.map((val, i) => {
-                const x = dataPoints.length === 1 ? 400 : (i / (dataPoints.length - 1)) * 800;
-                const y = 300 - (((val - min) / range) * 200 + 50);
-                return (
-                  <circle key={i} cx={x} cy={y} r="4" fill="var(--background)" stroke="var(--foreground)" strokeWidth="2" />
-                )
-             })}
+             {dataPoints.length === 0 ? (
+               <text x="400" y="150" textAnchor="middle" fill="var(--foreground-muted)">No practice sessions completed yet.</text>
+             ) : (
+               <>
+                 <path d={generatePath()} fill="none" stroke="var(--foreground)" strokeWidth="2.5" />
+                 {dataPoints.map((val, i) => {
+                    const x = dataPoints.length === 1 ? 400 : (i / (dataPoints.length - 1)) * 800;
+                    const y = 300 - (((val - min) / range) * 200 + 50);
+                    return (
+                      <circle key={i} cx={x} cy={y} r="4" fill="var(--background)" stroke="var(--foreground)" strokeWidth="2" />
+                    )
+                 })}
+               </>
+             )}
            </svg>
       </div>
 

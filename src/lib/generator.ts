@@ -1,6 +1,6 @@
 import { Entry } from "./mockData";
 
-export type Difficulty = "EASY" | "NORMAL" | "HARD";
+export type Difficulty = "EASY" | "NORMAL" | "HARD" | number;
 
 // REAL EXCERPTS (Real Texts) instead of random procedural gibberish.
 const REAL_TEXTS = {
@@ -49,12 +49,11 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
   
   const textRaw = sourceRaw.text;
 
-  let targetLength = 50;
-  if (diff === "NORMAL") targetLength = 100;
-  if (diff === "HARD") targetLength = 200;
+  let targetLength = typeof diff === "number" ? diff : (diff === "NORMAL" ? 100 : (diff === "HARD" ? 200 : 50));
   
   if (language === "zh") {
-     targetLength = diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250;
+     if (typeof diff === "number") targetLength = diff;
+     else targetLength = diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250;
   }
   
   // Try to find a real semantic chunk from the raw text matching approximate length
@@ -91,7 +90,7 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
     id: `auto-${Date.now()}`,
     title: overrideTitle && overrideTitle.trim() !== "每日隨機生成" && overrideTitle.trim() !== "" ? overrideTitle : sourceRaw.title,
     text: finalText,
-    difficulty: diff === "NORMAL" ? "CORE" : diff,
+    difficulty: diff === "NORMAL" ? "CORE" : typeof diff === "number" ? "CUSTOM" : diff,
     wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
     source: "Real Text Knowledge Base"
   };
@@ -154,7 +153,7 @@ export async function generateWikiText(language: "en" | "zh", diff: Difficulty, 
           id: `wiki-${Date.now()}`,
           title: page.title,
           text: finalText,
-          difficulty: diff === "NORMAL" ? "CORE" : diff,
+          difficulty: diff === "NORMAL" ? "CORE" : typeof diff === "number" ? "CUSTOM" : diff,
           wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
           source: `Wikipedia (${language.toUpperCase()})`
         };
