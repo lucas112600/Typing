@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
+import { useConfig } from "@/context/ConfigContext";
+import { appendStat } from "@/lib/statsStore";
 
 export default function PracticePage() {
   const router = useRouter();
+  const { stopOnError } = useConfig();
   const [targetText, setTargetText] = useState("");
   const [title, setTitle] = useState("");
   const [value, setValue] = useState("");
@@ -13,6 +16,7 @@ export default function PracticePage() {
   const [composingData, setComposingData] = useState("");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,6 +24,7 @@ export default function PracticePage() {
   useEffect(() => {
     SystemLogPubSub.publish("SYS_PRACTICE_INIT");
     const dataStr = sessionStorage.getItem("typing_practice_data");
+// ... skipped unmodified parts ...
     if (dataStr) {
       try {
         const data = JSON.parse(dataStr);
@@ -33,7 +38,6 @@ export default function PracticePage() {
       setTitle("Fallback Text");
     }
 
-    // focus input
     const t = setTimeout(() => {
       inputRef.current?.focus();
       SystemLogPubSub.publish("IME_READY");
@@ -55,13 +59,56 @@ export default function PracticePage() {
     }
   };
 
+  const finalizeSession = (finalValue: string, finalErrors: number) => {
+    if (isFinished || targetText.length === 0) return;
+    setIsFinished(true);
+    SystemLogPubSub.publish("PRACTICE_FINISHED");
+    
+    if (startTime) {
+      const timeMs = Date.now() - startTime;
+      const minutes = timeMs / 60000;
+      
+      let correctChars = 0;
+      for (let i = 0; i < targetText.length; i++) {
+        if (finalValue[i] === targetText[i]) correctChars++;
+      }
+      
+      const accuracy = Math.max(0, 100 - (finalErrors / targetText.length) * 100);
+      const wpm = (correctChars / 5) / minutes;
+      
+      appendStat({
+        date: new Date().toISOString(),
+        wpm: Math.round(wpm),
+        accuracy: Math.round(accuracy)
+      });
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+    if (isFinished) return;
+    let val = e.target.value;
+
+    if (!isComposing) {
+      if (stopOnError) {
+        // In strict mode, reject the exact stroke if it fails equality at its length
+        if (val.length > value.length && targetText.substring(0, val.length) !== val) {
+          setErrorCount(prev => prev + 1);
+          return; // reject completely
+        }
+      } else {
+        // Count mistake if we advanced and it was wrong
+        if (val.length > value.length) {
+          const charIndex = val.length - 1;
+          if (val[charIndex] !== targetText[charIndex]) {
+            setErrorCount(prev => prev + 1);
+          }
+        }
+      }
+    }
+
     setValue(val);
     if (val.length >= targetText.length && !isComposing && targetText.length > 0) {
-      setIsFinished(true);
-      SystemLogPubSub.publish("PRACTICE_FINISHED");
-      // Could redirect to stats here
+      finalizeSession(val, errorCount);
     }
   };
 
@@ -72,9 +119,25 @@ export default function PracticePage() {
   const handleCompEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
     setIsComposing(false);
     setComposingData("");
-    if (value.length >= targetText.length && targetText.length > 0) {
-      setIsFinished(true);
-      SystemLogPubSub.publish("PRACTICE_FINISHED");
+    
+    // Evaluate if strict mode needs to slice off the composed block
+    let finalVal = value;
+    if (stopOnError) {
+      if (targetText.substring(0, value.length) !== value) {
+         // The composition produced an error block, strip back to last known good
+         for (let i=0; i <= value.length; i++) {
+            if (value.substring(0, i) !== targetText.substring(0, i)) {
+               finalVal = value.substring(0, i - 1);
+               setErrorCount(prev => prev + 1);
+               break;
+            }
+         }
+         setValue(finalVal);
+      }
+    }
+    
+    if (finalVal.length >= targetText.length && targetText.length > 0) {
+      finalizeSession(finalVal, errorCount);
     }
   };
 

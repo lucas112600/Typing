@@ -1,28 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
+import { getStats, StatSession } from "@/lib/statsStore";
 
 export default function StatsPage() {
   const router = useRouter();
+  const [sessions, setSessions] = useState<StatSession[]>([]);
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_STATS_READY");
+    setSessions(getStats());
   }, []);
 
-  const dataPoints = [40, 45, 42, 50, 55, 58, 62, 60, 65, 70, 72, 75];
-  const max = Math.max(...dataPoints);
-  const min = Math.min(...dataPoints);
-  const range = max - min;
+  const dataPoints = sessions.length > 0 ? sessions.map(s => s.wpm) : [0];
+  const max = Math.max(...dataPoints, 10);
+  const min = Math.min(...dataPoints, 0);
+  const range = max - min === 0 ? 1 : max - min;
   
   const generatePath = () => {
+    if (dataPoints.length === 1) return `M 0 150 L 800 150`;
     return dataPoints.map((val, i) => {
       const x = (i / (dataPoints.length - 1)) * 800;
       const y = 300 - (((val - min) / range) * 200 + 50); // padding 50
       return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
     }).join(" ");
   };
+
+  const avgWpm = sessions.length > 0 ? Math.round(sessions.reduce((a,b)=>a+b.wpm, 0) / sessions.length) : 0;
+  const avgAcc = sessions.length > 0 ? Math.round(sessions.reduce((a,b)=>a+b.accuracy, 0) / sessions.length) : 0;
 
   return (
     <div style={{ padding: "4rem", height: "100%", display: "flex", flexDirection: "column" }}>
@@ -32,16 +39,16 @@ export default function StatsPage() {
 
       <div className="animate-step-in stagger-2" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem", marginBottom: "4rem" }}>
         <div style={{ border: "1px solid var(--foreground)", padding: "2rem" }}>
-          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>WPM / CPM</div>
-          <div style={{ fontSize: "4rem", fontWeight: 900 }}>75</div>
+          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>AVG_WPM / CPM</div>
+          <div style={{ fontSize: "4rem", fontWeight: 900 }}>{avgWpm}</div>
         </div>
         <div style={{ border: "1px solid var(--foreground)", padding: "2rem" }}>
-          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>ACCURACY</div>
-          <div style={{ fontSize: "4rem", fontWeight: 900 }}>98%</div>
+          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>AVG_ACCURACY</div>
+          <div style={{ fontSize: "4rem", fontWeight: 900 }}>{avgAcc}%</div>
         </div>
         <div style={{ border: "1px solid var(--foreground)", padding: "2rem" }}>
-          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>STABILITY</div>
-          <div style={{ fontSize: "4rem", fontWeight: 900 }}>A+</div>
+          <div style={{ fontSize: "0.8rem", letterSpacing: "2px", opacity: 0.8 }}>SESSION_COUNT</div>
+          <div style={{ fontSize: "4rem", fontWeight: 900 }}>{sessions.length}</div>
         </div>
       </div>
 

@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 
+import { useConfig } from "@/context/ConfigContext";
+
 export default function SettingsPage() {
   const router = useRouter();
   
-  const [fontSize, setFontSize] = useState("LARGE");
-  const [cursorStyle, setCursorStyle] = useState("CROSSHAIR");
-  const [stopOnError, setStopOnError] = useState(false);
+  const { fontSize, cursorStyle, stopOnError, setFontSize, setCursorStyle, setStopOnError } = useConfig();
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_CONFIG");

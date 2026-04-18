@@ -2,7 +2,13 @@
   --background: #000000;
   --foreground: #ffffff;
   --accent: #ff0000;
+  --font-scale: 1;
 }
+
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
 
 * {
   box-sizing: border-box;

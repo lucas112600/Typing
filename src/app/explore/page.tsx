@@ -102,9 +102,48 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      {/* LIST */}
+      {/* LIST OR FORGE */}
       <div className="animate-step-in stagger-3" style={{ flex: 1, overflowY: "auto" }}>
-        {entries.length === 0 ? (
+        {cat2 === "AI_FORGE" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem", marginTop: "2rem" }}>
+            <div style={{ fontSize: "1.5rem" }}>[ SYS_PROMPT_REQUIREMENT ]</div>
+            <input 
+              className="brutal-invert"
+              style={{
+                width: "100%",
+                padding: "2rem",
+                fontSize: "2rem",
+                fontWeight: 900,
+                border: "2px solid var(--foreground)",
+                outline: "none"
+              }}
+              placeholder="ENTER GENERATION DIRECTIVES..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const val = e.currentTarget.value;
+                  if (!val.trim()) return;
+                  SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
+                  e.currentTarget.disabled = true;
+                  setTimeout(() => {
+                     e.currentTarget.disabled = false;
+                     e.currentTarget.value = "";
+                     SystemLogPubSub.publish("GENERATION_COMPLETE");
+                     const genEntry: Entry = {
+                       id: "forge-" + Date.now(),
+                       difficulty: "HARD",
+                       title: "FORGED: " + val.toUpperCase(),
+                       wordCount: val.length * 3 + 100,
+                       source: "NEURAL_NET",
+                       text: cat1 === "ZH_CHINESE" ? `這是一段針對指令「${val}」生成的對應中文鍛鍊測試文本，請專注於你的每一次敲擊。` : `This is a generated testing document addressing the directive "${val}". Stay focused on every stroke.`
+                     };
+                     handleSelect(genEntry);
+                  }, 1500);
+                }
+              }}
+            />
+            <div style={{ opacity: 0.5, letterSpacing: "2px" }}>PRESS ENTER TO INITIATE SYNTHESIS.</div>
+          </div>
+        ) : entries.length === 0 ? (
           <div style={{ opacity: 0.5, letterSpacing: "2px" }}>// NO_DATA</div>
         ) : (
           entries.map((entry) => (
@@ -130,10 +169,15 @@ export default function ExplorePage() {
         )}
       </div>
 
-      <div className="animate-step-in stagger-4" style={{ marginTop: "2rem", opacity: 0.5 }}>
-        <button className="brutal-invert" style={{ padding: "0.5rem 1rem", border: "1px solid var(--foreground)" }} onClick={() => router.push("/")}>
+      <div className="animate-step-in stagger-4" style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <button className="brutal-invert" style={{ padding: "0.5rem 1rem", border: "1px solid var(--foreground)", opacity: 0.5 }} onClick={() => router.push("/")}>
           ← BACK
         </button>
+        {cat2 !== "AI_FORGE" && entries.length > 0 && (
+          <div style={{ letterSpacing: "4px", fontSize: "1.2rem" }}>
+            [ 01 / 12 ]
+          </div>
+        )}
       </div>
     </div>
   );

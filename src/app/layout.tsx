@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import Cursor from "@/components/Cursor";
 import SystemLog from "@/components/SystemLog";
+import { ConfigProvider } from "@/context/ConfigContext";
 
 const inter = Inter({ subsets: ["latin"], weight: ["900"], variable: "--font-inter" });
 const notoSansTC = Noto_Sans_TC({ subsets: ["latin"], weight: ["900"], variable: "--font-noto-sans-tc" });
@@ -20,9 +21,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${notoSansTC.variable}`}>
-        <Cursor />
-        {children}
-        <SystemLog />
+        <ConfigProvider>
+          <Cursor />
+          {children}
+          <SystemLog />
+        </ConfigProvider>
       </body>
     </html>
   );
