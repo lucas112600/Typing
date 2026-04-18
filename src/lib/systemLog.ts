@@ -7,7 +7,7 @@ export const SystemLogPubSub = {
   subscribe: (listener: LogListener) => {
     listeners.add(listener);
     listener(currentLog);
-    return () => listeners.delete(listener);
+    return () => { listeners.delete(listener); };
   },
   publish: (msg: string) => {
     currentLog = msg;
