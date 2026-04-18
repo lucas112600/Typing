@@ -24,7 +24,7 @@ export default function HomeInteraction() {
       const diffLevels: Difficulty[] = ["EASY", "NORMAL", "HARD"];
       const finalDiff = difficulty || diffLevels[Math.floor(Math.random() * diffLevels.length)];
       
-      const practiceData = generateText(lang, finalDiff, "每日隨機生成");
+      const practiceData = generateText(lang, finalDiff);
       
       sessionStorage.setItem("typing_practice_data", JSON.stringify({
         ...practiceData,
@@ -40,7 +40,7 @@ export default function HomeInteraction() {
       
       {/* Cover Icon / Title */}
       <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⌨️</div>
-      <h1 className="notion-title">Typing Practice Hub</h1>
+      <h1 className="notion-title">Typing...</h1>
       <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
         Focus on improving your typing speed and accuracy through procedurally generated, distraction-free practices.
       </p>

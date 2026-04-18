@@ -2,125 +2,97 @@ import { Entry } from "./mockData";
 
 export type Difficulty = "EASY" | "NORMAL" | "HARD";
 
-export const generateText = (language: "en" | "zh", difficulty: Difficulty, customPrompt?: string): Entry => {
-  const prompt = customPrompt || (language === "zh" ? "自動生成主題" : "Auto-Generated Topic");
-  const hash = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + Date.now();
+// REAL EXCERPTS (Real Texts) instead of random procedural gibberish.
+const REAL_TEXTS = {
+  en: [
+    {
+      title: "The Apollo Program",
+      text: "The Apollo program, also known as Project Apollo, was the third United States human spaceflight program carried out by the National Aeronautics and Space Administration (NASA), which succeeded in preparing and landing the first humans on the Moon from 1968 to 1972. It was first conceived in 1960 during President Dwight D. Eisenhower's administration as a three-man spacecraft to follow the one-man Project Mercury, which put the first Americans in space. Apollo was later dedicated to President John F. Kennedy's national goal for the 1960s of landing a man on the Moon and returning him safely to the Earth."
+    },
+    {
+      title: "Machine Learning",
+      text: "Machine learning (ML) is a field of inquiry devoted to understanding and building methods that 'learn', that is, methods that leverage data to improve performance on some set of tasks. It is seen as a part of artificial intelligence. Machine learning algorithms build a model based on sample data, known as training data, in order to make predictions or decisions without being explicitly programmed to do so. Machine learning algorithms are used in a wide variety of applications, such as in medicine, email filtering, speech recognition, agriculture, and computer vision."
+    },
+    {
+      title: "Philosophy of Stoicism",
+      text: "Stoicism is a school of Hellenistic philosophy founded by Zeno of Citium in Athens in the early 3rd century BC. It is a philosophy of personal ethics informed by its system of logic and its views on the natural world. According to its teachings, as social beings, the path to eudaimonia (happiness) is found in accepting the moment as it presents itself, by not allowing oneself to be controlled by the desire for pleasure or fear of pain, by using one's mind to understand the world and to do one's part in nature's plan, and by working together and treating others fairly and justly."
+    },
+    {
+      title: "The Industrial Revolution",
+      text: "The Industrial Revolution was the transition to new manufacturing processes in Great Britain, continental Europe, and the United States, that occurred during the period from around 1760 to about 1820–1840. This transition included going from hand production methods to machines, new chemical manufacturing and iron production processes, the increasing use of steam power and water power, the development of machine tools and the rise of the mechanized factory system. The Industrial Revolution also led to an unprecedented rise in the rate of population growth."
+    }
+  ],
+  zh: [
+    {
+      title: "相對論精華",
+      text: "相對論是關於時空和引力的理論，主要由愛因斯坦創立，依其研究對象的不同可分為狹義相對論和廣義相對論。相對論和量子力學的提出給物理學帶來了革命性的變化，它們共同奠定了現代物理學的基礎。相對論極大地改變了人類對宇宙和自然的常識性觀念，提出了同時的相對性、四維時空、彎曲時空等全新的概念。不過近年來，人們對於物理理論的分類有了一種新的認識，以其理論是否是決定論的來劃分經典與非經典的物理學。"
+    },
+    {
+      title: "深度學習與神經網路",
+      text: "深度學習是機器學習的分支，是一種以人工神經網路為架構，對資料進行表徵學習的演算法。深度學習中的讚譽名稱，如「深度神經網路」、「深度信念網路」甚至是「迴圈神經網路」，已經被應用於電腦視覺、語音辨識、自然語言處理、音訊辨識與生物資訊學等領域並獲取了極好的效果。實際上，深度學習有許多結構，有些架構並不一定屬於神經網路家族，不過因為神經網路與大腦神經的高度相似性，這項科技已經成為推動現代人工智慧突破的核心概念。"
+    },
+    {
+      title: "文藝復興的影響",
+      text: "文藝復興是一場發生在14世紀至17世紀的文化運動，在中世紀晚期發源於佛羅倫斯，後擴充套件至歐洲各國。「文藝復興」一詞亦可粗略地指代這一歷史時期，但由於歐洲各地因其引發的變化的時間並不一致，故「文藝復興」邊緣期及歷史時代無明確界線。這場文化運動囊括了對古典文獻的重新學習，在透視法方面的全新繪畫技術發展，以及廣泛而富有創造力的藝術實踐。它被視為是中世紀時代與近代之間的過渡與橋樑。"
+    },
+    {
+      title: "黑洞物理學",
+      text: "黑洞是時空展現出極端強大的引力，以致於所有粒子、甚至光這樣的電磁輻射都不能逃逸的區域。廣義相對論預測，足夠緊密的質量可以扭曲時空，形成黑洞；不可能從該區域逃離的邊界稱為事件視界。雖然事件視界對穿越它的物體的命運和情況有巨大影響，但對該地區的觀測似乎未能探測到任何特徵。在許多方面，黑洞就像一個理想的黑體，它不反光。"
+    }
+  ]
+};
 
+export function generateText(language: "en" | "zh", diff: Difficulty, overrideTitle?: string): Entry {
+  // Get the target corpus
+  const corpus = REAL_TEXTS[language];
+  const sourceRaw = corpus[Math.floor(Math.random() * corpus.length)];
+  
+  const textRaw = sourceRaw.text;
+
+  let targetLength = 50;
+  if (diff === "NORMAL") targetLength = 100;
+  if (diff === "HARD") targetLength = 200;
+  
   if (language === "zh") {
-    return generateChineseAI(prompt, difficulty, hash);
-  } else {
-    return generateEnglishAI(prompt, difficulty, hash);
+     targetLength = diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250;
   }
-};
-
-const generateChineseAI = (prompt: string, difficulty: Difficulty, hash: number): Entry => {
-  const starters = [
-    `在探討${prompt}的過程中，我們能發現許多有趣的現象。`,
-    `今天想和大家分享關於${prompt}的一些想法。`,
-    `隨著社會發展，${prompt}已經成為了不可忽視的焦點。`,
-    `如果你對${prompt}感興趣，那這篇文章值得一看。`
-  ];
-
-  const middlesEASY = [
-    "它讓生活變得更簡單。每天看到進步，都讓人很開心。",
-    "有時候，簡單的改變就能帶來很大的影響。",
-    "大家都在學著適應，這其實不難。"
-  ];
   
-  const middlesNORMAL = [
-    "首先，這不僅僅是工具的替換，而是思維方式的轉折。我們必須學會與新事物協作。",
-    "從歷史的角度來看，每一次技術革新都會帶來短暫的陣痛期，但長期而言會帶來龐大效益。",
-    "這項改變在各行各業中都引發了廣泛的討論，實踐的過程中雖然遇挫，卻也收穫豐富。"
-  ];
-
-  const middlesHARD = [
-    "從宏觀經濟學的角度切入，其演進對全球供應鏈產生了不可逆轉的結構性改變。分散式架構與去中心化思維在此扮演了催化劑的角色。",
-    "量子計算與神經網路的交叉應用正在重塑這個領域的邊界。研究人員在解決演算法收斂性問題時，經常需要藉助高維向量空間的正交特性。",
-    "我們必須謹慎考慮其伴隨的倫理風險。正如傅柯在權力論述中所言，知識體系的建構往往隱藏著未被察覺的規訓機制。盲目追求效率而忽略人文底蘊，將導致文明的失衡。"
-  ];
-
-  const ends = [
-    "總而言之，保持開放的心態是最重要的。",
-    "未來的發展充滿無限可能，讓我們拭目以待。",
-    "希望這能給你帶來一些不一樣的啟發。"
-  ];
-
-  const start = starters[hash % starters.length];
-  const end = ends[hash % ends.length];
-
-  let body = "";
-  if (difficulty === "EASY") {
-    body = middlesEASY[hash % middlesEASY.length];
-  } else if (difficulty === "NORMAL") {
-     body = middlesNORMAL[(hash + 1) % middlesNORMAL.length] + middlesNORMAL[(hash + 2) % middlesNORMAL.length];
+  // Try to find a real semantic chunk from the raw text matching approximate length
+  let finalText = textRaw;
+  
+  if (language === "en") {
+     const tokens = textRaw.split(/(?<=\. )/g); // Split by sentences
+     let combined = "";
+     for (const sentence of tokens) {
+        if ((combined + sentence).split(" ").length > targetLength * 1.2) {
+           if (combined.length === 0) combined = sentence;
+           break;
+        }
+        combined += sentence;
+     }
+     finalText = combined.trim();
   } else {
-     body = middlesNORMAL[(hash + 1) % middlesNORMAL.length] + middlesHARD[(hash + 3) % middlesHARD.length] + middlesHARD[(hash + 4) % middlesHARD.length];
+     const tokens = textRaw.split(/(?<=[。！？])/g);
+     let combined = "";
+     for (const sentence of tokens) {
+         if (combined.length + sentence.length > targetLength * 1.2) {
+            if (combined.length === 0) combined = sentence;
+            break;
+         }
+         combined += sentence;
+     }
+     finalText = combined.trim();
   }
 
-  const generatedText = start + body + end;
+  // Fallback to ensuring we don't return empty
+  if (finalText.length < 5) finalText = sourceRaw.text;
 
   return {
-    id: "gen-" + Date.now(),
-    difficulty: difficulty === "NORMAL" ? "CORE" : difficulty,
-    title: `隨機生成: ${difficulty}`,
-    wordCount: generatedText.length,
-    source: "NEURAL_FORGE_PROCEDURAL",
-    text: generatedText
+    id: `auto-${Date.now()}`,
+    title: overrideTitle && overrideTitle.trim() !== "每日隨機生成" && overrideTitle.trim() !== "" ? overrideTitle : sourceRaw.title,
+    text: finalText,
+    difficulty: diff,
+    wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
+    source: "Real Text Knowledge Base"
   };
-};
-
-
-const generateEnglishAI = (prompt: string, difficulty: Difficulty, hash: number): Entry => {
-  const starters = [
-    `The evolution of ${prompt} has been remarkable to witness. `,
-    `When approaching ${prompt}, we must keep an open mind. `,
-    `Recent studies suggest that ${prompt} is gaining momentum. `
-  ];
-
-  const middlesEASY = [
-    "It is very easy to use and helps us a lot. ",
-    "Many people like it because it saves time. ",
-    "Just keep trying and you will see the results. "
-  ];
-  
-  const middlesNORMAL = [
-    "Furthermore, the operational efficiency achieved is unparalleled. Industries are rapidly adapting to these new tools and enjoying the benefits. ",
-    "While the initial learning curve can be steep, the overall trajectory points towards massive productivity gains. ",
-    "It shifts the paradigm from traditional methods to a more dynamic, responsive framework entirely. "
-  ];
-
-  const middlesHARD = [
-    "Simultaneously, the integration of isomorphic architectures and distributed ledger networks exacerbates the complexity of concurrent state management. ",
-    "Developers must wrestle with asymptotic complexities and algorithmic bottlenecks to ensure low-latency throughput across disparate microservices. ",
-    "The deterministic nature of classical mechanics is being challenged here, introducing stochastic variables that fundamentally disrupt canonical predictive models. "
-  ];
-
-  const ends = [
-    "In conclusion, remaining agile is the key to success.",
-    "Ultimately, only time will tell how this plays out.",
-    "In the end, innovation always finds a way forward."
-  ];
-
-  const start = starters[hash % starters.length];
-  const end = ends[hash % ends.length];
-
-  let body = "";
-  if (difficulty === "EASY") {
-    body = middlesEASY[hash % middlesEASY.length];
-  } else if (difficulty === "NORMAL") {
-     body = middlesNORMAL[(hash + 1) % middlesNORMAL.length] + middlesNORMAL[(hash + 2) % middlesNORMAL.length];
-  } else {
-     body = middlesNORMAL[(hash + 1) % middlesNORMAL.length] + middlesHARD[(hash + 3) % middlesHARD.length] + middlesHARD[(hash + 4) % middlesHARD.length];
-  }
-
-  const generatedText = start + body + end;
-
-  return {
-    id: "gen-" + Date.now(),
-    difficulty: difficulty === "NORMAL" ? "CORE" : difficulty,
-    title: `Synthesis: ${difficulty}`,
-    wordCount: generatedText.split(' ').length,
-    source: "NEURAL_FORGE_PROCEDURAL",
-    text: generatedText
-  };
-};
+}
