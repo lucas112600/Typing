@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
-import { appendStat } from "@/lib/statsStore";
 
 export default function PracticePage() {
   const router = useRouter();
