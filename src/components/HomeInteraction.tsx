@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import type { NewsItem } from "@/lib/newsApi";
+import Logo from "@/components/Logo";
 
 export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | null }) {
   const router = useRouter();
@@ -19,12 +20,20 @@ export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | nul
       if (e.code === "Space") {
         e.preventDefault();
         SystemLogPubSub.publish("INITIATE_PRACTICE");
+        router.push("/explore"); // Wait, space to explore? Usually space to practice!
+      }
+    };
+    // Reverted the push back to practice directly as initially written.
+    const handleKeyDownFixed = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        SystemLogPubSub.publish("INITIATE_PRACTICE");
         router.push("/practice");
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDownFixed);
+    return () => window.removeEventListener("keydown", handleKeyDownFixed);
   }, [router, newsItem]);
 
   return (
@@ -35,8 +44,13 @@ export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | nul
       height: "100%",
       padding: "2rem"
     }}>
-      <div className="animate-step-in stagger-1" style={{ fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>
-        [ DAILY_PICK ]
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+         <div className="animate-step-in stagger-1" style={{ fontSize: "12px", letterSpacing: "2px", fontWeight: 900 }}>
+           [ DAILY_PICK ]
+         </div>
+         <div className="animate-step-in stagger-1">
+           <Logo size={56} />
+         </div>
       </div>
 
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>

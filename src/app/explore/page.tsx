@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
+import Logo from "@/components/Logo";
 
 type Category1 = "ZH_CHINESE" | "EN_ENGLISH";
 type Category2 = "NEWS_FEED" | "AI_FORGE" | "ARCHIVE";
@@ -64,7 +65,8 @@ export default function ExplorePage() {
   return (
     <div style={{ padding: "4rem", display: "flex", flexDirection: "column", height: "100%", fontWeight: 900 }}>
       {/* HEADER / NAVIGATION */}
-      <div className="animate-step-in stagger-1" style={{ display: "flex", gap: "2rem", borderBottom: "2px solid var(--foreground)", paddingBottom: "1rem", marginBottom: "2rem" }}>
+      <div className="animate-step-in stagger-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid var(--foreground)", paddingBottom: "1rem", marginBottom: "2rem" }}>
+        <Logo size={42} />
         <div style={{ display: "flex", gap: "1rem" }}>
           <button 
             className="brutal-invert"
