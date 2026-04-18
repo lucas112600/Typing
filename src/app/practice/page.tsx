@@ -132,7 +132,9 @@ export default function PracticePage() {
        
        const accuracy = Math.max(0, 100 - (finalErrors / targetText.length) * 100);
        const wpmDivisor = language === "zh" ? 1 : 5;
-       const wpm = Math.round((correctChars / wpmDivisor) / minutes);
+       
+       // Safety: Minimum 1 second for calculation
+       const wpm = timeMs > 1000 ? Math.round((correctChars / wpmDivisor) / minutes) : 0;
        
        setFinalResult({ wpm, accuracy: Math.round(accuracy) });
 

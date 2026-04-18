@@ -173,7 +173,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     const otherPlayers = players.filter(p => p.id !== userId);
     const allOthersReady = otherPlayers.every(p => p.ready);
     
-    if (newReady && allOthersReady && players.length >= 1) {
+    // Only trigger countdown if everyone is ready and we aren't already starting
+    if (newReady && allOthersReady && players.length >= 1 && gameState === "LOBBY") {
        channelRef.current.send({
          type: "broadcast",
          event: "race_event",
@@ -238,7 +239,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
     const progress = Math.min(100, Math.round((val.length / targetText.length) * 100));
     const timeMs = Date.now() - (startTime || 0);
-    const wpm = Math.round((val.length / 5) / (timeMs / 60000)) || 0;
+    
+    // Safety: WPM calculation only after 1 second to avoid Infinity/Spikes
+    const wpm = timeMs > 1000 ? Math.round((val.length / 5) / (timeMs / 60000)) : 0;
     
     await channelRef.current.track({
       id: userId,
