@@ -134,6 +134,16 @@ export default class Server implements Party.Server {
           leaderboard: this.leaderboard
         }));
         break;
+
+      case "REQUEST_SYNC":
+        sender.send(JSON.stringify({
+          type: "SYNC_ROOM",
+          players: Array.from(this.players.values()),
+          text: this.text,
+          title: this.title,
+          state: this.state
+        }));
+        break;
     }
   }
 

@@ -19,8 +19,9 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     // Connect to a dedicated 'global' room for high scores
+    const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
     const socket = new PartySocket({
-      host: window.location.host.includes("localhost") ? "localhost:1999" : window.location.host,
+      host,
       room: "global", // All users share this ranking room
     });
 

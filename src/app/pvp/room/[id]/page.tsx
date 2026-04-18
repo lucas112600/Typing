@@ -26,7 +26,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [players, setPlayers] = useState<Player[]>([]);
   const [targetText, setTargetText] = useState("");
   const [title, setTitle] = useState("Loading...");
-  const [gameState, setGameState] = useState<"LOBBY" | "STARTING" | "RACING">("LOBBY");
+  const [gameState, setGameState] = useState<"LOADING" | "LOBBY" | "STARTING" | "RACING">("LOADING");
   const [countdown, setCountdown] = useState(0);
   
   // Typing State
@@ -39,8 +39,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
     const ws = new PartySocket({
-      host: window.location.host.includes("localhost") ? "localhost:1999" : window.location.host,
+      host,
       room: roomId,
     });
 
@@ -79,6 +80,11 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           setTitle(data.title);
           break;
       }
+    });
+    
+    ws.addEventListener("open", () => {
+      console.log("PartySocket connected to room:", roomId);
+      ws.send(JSON.stringify({ type: "REQUEST_SYNC" }));
     });
 
     setSocket(ws);
@@ -152,8 +158,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       const finalWpm = Math.round(wpm);
       const finalAccuracy = Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100));
       
+      const host = process.env.NEXT_PUBLIC_PARTY_HOST || (window.location.host.includes("localhost") ? "localhost:1999" : window.location.host);
       const globalSocket = new PartySocket({
-        host: window.location.host.includes("localhost") ? "localhost:1999" : window.location.host,
+        host,
         room: "global",
       });
       
