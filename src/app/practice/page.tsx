@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
+import audioManager from "@/lib/audioManager";
 
 export default function PracticePage() {
   const router = useRouter();
-  const { fontSize, stopOnError } = useConfig();
+  const { fontSize, stopOnError, soundEnabled, soundVolume } = useConfig();
   const [targetText, setTargetText] = useState("");
   const [title, setTitle] = useState("");
   const [value, setValue] = useState("");
@@ -49,6 +50,12 @@ export default function PracticePage() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    if (audioManager) {
+      audioManager.setVolume(soundVolume);
+    }
+  }, [soundVolume]);
+
   const handleContainerClick = () => {
     inputRef.current?.focus();
   };
@@ -59,6 +66,15 @@ export default function PracticePage() {
     }
     if (!startTime && e.key.length === 1 && !isComposing) {
        setStartTime(Date.now());
+    }
+    
+    // Play sounds on KeyDown for immediate feedback
+    if (soundEnabled && !isFinished && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (e.key === " ") {
+        audioManager?.play("space");
+      } else {
+        audioManager?.play("standard");
+      }
     }
   };
 
@@ -86,6 +102,10 @@ export default function PracticePage() {
          wpm: Math.round(wpm),
          accuracy: Math.round(accuracy)
        });
+
+       if (soundEnabled) {
+         audioManager?.play("finish");
+       }
     }
   };
 
@@ -104,6 +124,7 @@ export default function PracticePage() {
           const charIndex = val.length - 1;
           if (val[charIndex] !== targetText[charIndex]) {
             setErrorCount((prev) => prev + 1);
+            if (soundEnabled) audioManager?.play("error");
           }
         }
       }

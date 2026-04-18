@@ -9,18 +9,30 @@ interface ConfigState {
   fontSize: FontSizeOption;
   cursorStyle: CursorStyleOption;
   stopOnError: boolean;
+  nickname: string;
+  soundEnabled: boolean;
+  soundVolume: number;
   setFontSize: (size: FontSizeOption) => void;
   setCursorStyle: (style: CursorStyleOption) => void;
   setStopOnError: (stop: boolean) => void;
+  setNickname: (name: string) => void;
+  setSoundEnabled: (enabled: boolean) => void;
+  setSoundVolume: (volume: number) => void;
 }
 
 const defaultConfig: ConfigState = {
   fontSize: "LARGE",
   cursorStyle: "CROSSHAIR",
   stopOnError: false,
+  nickname: "",
+  soundEnabled: true,
+  soundVolume: 0.5,
   setFontSize: () => {},
   setCursorStyle: () => {},
   setStopOnError: () => {},
+  setNickname: () => {},
+  setSoundEnabled: () => {},
+  setSoundVolume: () => {},
 };
 
 const ConfigContext = createContext<ConfigState>(defaultConfig);
@@ -31,6 +43,9 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [fontSize, setFontSizeState] = useState<FontSizeOption>("LARGE");
   const [cursorStyle, setCursorStyleState] = useState<CursorStyleOption>("CROSSHAIR");
   const [stopOnError, setStopOnErrorState] = useState(false);
+  const [nickname, setNicknameState] = useState("");
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+  const [soundVolume, setSoundVolumeState] = useState(0.5);
 
   // Load from local storage on mount
   useEffect(() => {
@@ -42,6 +57,9 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         if (parsed.fontSize) setFontSizeState(parsed.fontSize);
         if (parsed.cursorStyle) setCursorStyleState(parsed.cursorStyle);
         if (parsed.stopOnError !== undefined) setStopOnErrorState(parsed.stopOnError);
+        if (parsed.nickname) setNicknameState(parsed.nickname);
+        if (parsed.soundEnabled !== undefined) setSoundEnabledState(parsed.soundEnabled);
+        if (parsed.soundVolume !== undefined) setSoundVolumeState(parsed.soundVolume);
       }
     } catch (e) {
       console.error("Failed to parse config", e);
@@ -51,18 +69,38 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   // Save to local storage on change
   const setFontSize = (v: FontSizeOption) => {
     setFontSizeState(v);
-    saveConfig({ fontSize: v, cursorStyle, stopOnError });
+    saveConfig({ fontSize: v, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume });
   };
   const setCursorStyle = (v: CursorStyleOption) => {
     setCursorStyleState(v);
-    saveConfig({ fontSize, cursorStyle: v, stopOnError });
+    saveConfig({ fontSize, cursorStyle: v, stopOnError, nickname, soundEnabled, soundVolume });
   };
   const setStopOnError = (v: boolean) => {
     setStopOnErrorState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError: v });
+    saveConfig({ fontSize, cursorStyle, stopOnError: v, nickname, soundEnabled, soundVolume });
+  };
+  const setNickname = (v: string) => {
+    setNicknameState(v);
+    localStorage.setItem("TYPING_NICKNAME", v); // Duplicate for easy access in non-context areas
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname: v, soundEnabled, soundVolume });
+  };
+  const setSoundEnabled = (v: boolean) => {
+    setSoundEnabledState(v);
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled: v, soundVolume });
+  };
+  const setSoundVolume = (v: number) => {
+    setSoundVolumeState(v);
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume: v });
   };
 
-  const saveConfig = (state: { fontSize: FontSizeOption; cursorStyle: CursorStyleOption; stopOnError: boolean }) => {
+  const saveConfig = (state: { 
+    fontSize: FontSizeOption; 
+    cursorStyle: CursorStyleOption; 
+    stopOnError: boolean; 
+    nickname: string;
+    soundEnabled: boolean;
+    soundVolume: number;
+  }) => {
     localStorage.setItem("TYPING_CONFIG", JSON.stringify(state));
   };
 
@@ -76,7 +114,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, [fontSize]);
 
   return (
-    <ConfigContext.Provider value={{ fontSize, cursorStyle, stopOnError, setFontSize, setCursorStyle, setStopOnError }}>
+    <ConfigContext.Provider value={{ 
+      fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume,
+      setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume 
+    }}>
       {children}
     </ConfigContext.Provider>
   );

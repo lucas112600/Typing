@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { generateText, Difficulty } from "@/lib/generator";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText } from "lucide-react";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy } from "lucide-react";
 
 export default function HomeInteraction() {
   const router = useRouter();
@@ -59,6 +59,14 @@ export default function HomeInteraction() {
         <button className="app-button" onClick={() => router.push("/explore")}>
           <BookOpen size={18} color="var(--foreground-muted)" />
           <span>Explore Database</span>
+        </button>
+        <button className="app-button" onClick={() => router.push("/pvp")} style={{ border: "1px solid #2383E2", background: "rgba(35, 131, 226, 0.05)" }}>
+          <Users size={18} color="#2383E2" />
+          <span style={{ color: "#2383E2", fontWeight: 600 }}>PvP Racing (Alpha)</span>
+        </button>
+        <button className="app-button" onClick={() => router.push("/leaderboard")} style={{ border: "1px solid #E2B714", background: "rgba(226, 183, 20, 0.05)" }}>
+          <Trophy size={18} color="#E2B714" />
+          <span style={{ color: "#E2B714", fontWeight: 600 }}>Hall of Fame</span>
         </button>
         <button className="app-button" onClick={() => router.push("/stats")}>
           <BarChart2 size={18} color="var(--foreground-muted)" />
