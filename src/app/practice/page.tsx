@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { appendStat } from "@/lib/statsStore";
+import { ArrowLeft, Flag } from "lucide-react";
 
 export default function PracticePage() {
   const router = useRouter();
@@ -78,7 +79,6 @@ export default function PracticePage() {
        
        const accuracy = Math.max(0, 100 - (finalErrors / targetText.length) * 100);
        
-       // Standard English uses 5 chars per word. Chinese uses 1 char per word.
        const wpmDivisor = language === "zh" ? 1 : 5;
        const wpm = (correctChars / wpmDivisor) / minutes;
        
@@ -124,7 +124,6 @@ export default function PracticePage() {
     setIsComposing(false);
     setComposingData("");
     
-    // In React 18, safe reference to current exact input value after IME
     const currentVal = inputRef.current?.value || value;
     let finalVal = currentVal;
     
@@ -165,15 +164,12 @@ export default function PracticePage() {
 
       const isCursorHere = index === value.length && !isFinished;
 
-      // Premium Glass Colors
+      // Professional Colors
       const color = stateClass === "text-correct" ? "var(--foreground)" :
                     stateClass === "text-upcoming" ? "var(--foreground-muted)" :
                     stateClass === "text-wrong" ? "var(--accent-danger)" : "var(--accent-secondary)";
                     
-      const opacity = stateClass === "text-upcoming" ? 0.3 : 1;
-      const textShadow = (stateClass === "text-correct" || stateClass === "text-composing") 
-                          ? "0 0 10px rgba(255,255,255,0.3)" : 
-                         stateClass === "text-wrong" ? "0 0 12px rgba(239, 68, 68, 0.6)" : "none";
+      const opacity = stateClass === "text-upcoming" ? 0.4 : 1;
 
       return (
         <span 
@@ -183,11 +179,10 @@ export default function PracticePage() {
             display: "inline-block",
             color,
             opacity,
-            textShadow,
             borderBottom: stateClass === "text-composing" ? "2px solid var(--accent-secondary)" : "none",
             backgroundColor: stateClass === "text-wrong" ? "rgba(239, 68, 68, 0.15)" : "transparent",
-            borderRadius: stateClass === "text-wrong" ? "2px" : "0",
-            transition: "all 0.1s"
+            borderRadius: stateClass === "text-wrong" ? "4px" : "0",
+            transition: "color 0.1s"
           }}
         >
           {isCursorHere && (
@@ -197,8 +192,7 @@ export default function PracticePage() {
               bottom: 0,
               width: "100%",
               height: "2px",
-              backgroundColor: "var(--accent-secondary)",
-              boxShadow: "0 0 8px var(--accent-secondary)",
+              backgroundColor: "var(--accent-primary)",
               animation: "blink 1s step-end infinite"
             }} />
           )}
@@ -211,44 +205,45 @@ export default function PracticePage() {
   const getFontSizeRem = () => {
      switch (fontSize) {
        case "MEDIUM": return "1.5rem";
-       case "LARGE": return "2.5rem";
-       case "EXTRA_LARGE": return "3.5rem";
-       default: return "2.5rem";
+       case "LARGE": return "2rem";
+       case "EXTRA_LARGE": return "2.5rem";
+       default: return "2rem";
      }
   };
 
   return (
     <div 
-      className="animate-step-in stagger-1"
+      className="animate-fade-in stagger-1"
       ref={containerRef}
       onClick={handleContainerClick}
       style={{
-        display: "flex", flex: 1, flexDirection: "column", justifyContent: "center", alignItems: "center",
-        height: "100%", padding: "4rem", position: "relative", zIndex: 10
+        display: "flex", flex: 1, flexDirection: "column",
+        minHeight: "100vh", padding: "2rem", position: "relative"
       }}
     >
-      <div className="glass-panel" style={{ position: "absolute", top: "2rem", left: "2rem", padding: "0.5rem 1.5rem" }}>
-        <span className="text-gradient" style={{ fontSize: "0.9rem", fontWeight: 600, letterSpacing: "2px" }}>{title}</span>
-      </div>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "1000px", margin: "0 auto", marginBottom: "4rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+           <Flag size={20} color="var(--foreground-muted)" />
+           <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--foreground-muted)" }}>{title}</span>
+        </div>
+        <button className="app-button" onClick={() => router.push("/")} style={{ padding: "0.5rem 1rem" }}>
+           <ArrowLeft size={16} /> Quit Practice
+        </button>
+      </header>
 
-      <div className="glass-panel" style={{ position: "absolute", top: "2rem", right: "2rem", padding: "0.5rem 1.5rem" }}>
-         <span className="text-gradient" style={{ fontSize: "0.9rem", fontWeight: 600 }}>ESC TO ABORT</span>
-      </div>
-
-      <div className="mono-text" style={{
-        maxWidth: "900px",
-        fontSize: getFontSizeRem(),
-        fontWeight: language === "zh" ? 400 : 600,
-        lineHeight: "1.6",
-        wordBreak: "break-all",
-        whiteSpace: "pre-wrap",
-        padding: "2rem",
-        borderRadius: "24px",
-        background: "rgba(0,0,0,0.2)",
-        border: "1px solid rgba(255,255,255,0.05)",
-        boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)"
-      }}>
-        {renderText()}
+      <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <div className="mono-text" style={{
+          maxWidth: "1000px",
+          width: "100%",
+          fontSize: getFontSizeRem(),
+          fontWeight: language === "zh" ? 400 : 500,
+          lineHeight: "1.6",
+          wordBreak: "break-all",
+          whiteSpace: "pre-wrap",
+          padding: "0 1rem",
+        }}>
+          {renderText()}
+        </div>
       </div>
 
       <input
@@ -264,14 +259,20 @@ export default function PracticePage() {
       />
 
       {isFinished && (
-        <div className="glass-panel animate-step-in stagger-2" style={{
-          marginTop: "4rem", padding: "1.5rem 3rem",
-          display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center",
-          border: "1px solid var(--accent-primary)",
-          boxShadow: "0 0 30px rgba(139, 92, 246, 0.4)"
+        <div className="app-card animate-fade-in stagger-2" style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          padding: "3rem",
+          display: "flex", flexDirection: "column", gap: "1.5rem", alignItems: "center",
+          boxShadow: "var(--shadow)"
         }}>
-          <h2 className="text-gradient-primary" style={{ fontSize: "2rem", fontWeight: 800 }}>PRACTICE FINISHED</h2>
-          <div style={{ color: "var(--foreground-muted)" }}>PRESS ESC TO RETURN TO HUB</div>
+          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--accent-primary)" }}>Session Complete</h2>
+          <div style={{ color: "var(--foreground-muted)" }}>Data saved. Press ESC or click the button below to return.</div>
+          <button className="app-button primary" style={{ width: "100%", padding: "1rem" }} onClick={() => router.push("/")}>
+            <ArrowLeft size={18} /> Return to Dashboard
+          </button>
         </div>
       )}
 

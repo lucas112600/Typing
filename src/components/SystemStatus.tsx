@@ -8,7 +8,6 @@ export default function SystemStatus() {
   const [latency, setLatency] = useState(12);
 
   useEffect(() => {
-    // Fake latency fluctuation for cool effect
     const interval = setInterval(() => {
       setLatency(Math.floor(Math.random() * 20) + 5);
     }, 5000);
@@ -22,50 +21,37 @@ export default function SystemStatus() {
   }, []);
 
   return (
-    <div
+    <footer
       style={{
         position: "fixed",
         bottom: 0,
         left: 0,
         width: "100%",
-        padding: "8px 24px",
-        backgroundColor: "rgba(11, 15, 25, 0.8)",
-        backdropFilter: "blur(8px)",
-        borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+        padding: "12px 24px",
+        backgroundColor: "var(--surface)",
+        borderTop: "1px solid var(--border)",
         zIndex: 9999,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         color: "var(--foreground-muted)",
-        fontSize: "0.75rem",
-        fontFamily: "var(--font-mono), monospace",
-        textTransform: "uppercase",
-        letterSpacing: "2px"
+        fontSize: "0.85rem",
+        fontFamily: "var(--font-outfit), sans-serif",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div style={{
           width: "8px", height: "8px", borderRadius: "50%",
-          backgroundColor: "#10B981",
-          boxShadow: "0 0 10px #10B981",
-          animation: "pulse 2s infinite"
+          backgroundColor: "#10B981"
         }} />
-        <span>SYSTEM_ONLINE</span>
-        <span style={{ opacity: 0.5 }}>|</span>
-        <span>LATENCY: {latency}ms</span>
+        <span style={{ fontWeight: 500 }}>System Online</span>
+        <span style={{ opacity: 0.3 }}>|</span>
+        <span>Latency: {latency}ms</span>
       </div>
       
-      <div style={{ opacity: 0.5 }}>
-        LATEST_EVENT: {log || "AWAITING_INPUT"}
+      <div style={{ fontStyle: "italic", opacity: 0.8 }}>
+        {log ? `Latest Action: ${log}` : "Awaiting user input..."}
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes pulse {
-          0% { opacity: 0.5; box-shadow: 0 0 5px #10B981; }
-          50% { opacity: 1; box-shadow: 0 0 15px #10B981; }
-          100% { opacity: 0.5; box-shadow: 0 0 5px #10B981; }
-        }
-      `}} />
-    </div>
+    </footer>
   );
 }

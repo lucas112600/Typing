@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 
 import { useConfig, FontSizeOption, CursorStyleOption } from "@/context/ConfigContext";
+import { ArrowLeft, Settings as SettingsIcon, Type, MousePointer2, AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,44 +17,57 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div style={{ padding: "4rem", height: "100%", display: "flex", flexDirection: "column", zIndex: 10, position: "relative" }}>
-      <div className="glass-panel animate-step-in stagger-1" style={{ padding: "1rem 2rem", marginBottom: "3rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div className="text-gradient-primary" style={{ fontSize: "1.8rem", fontWeight: 800 }}>
-          CONTROL_PANEL
+    <div style={{ padding: "4rem 2rem", minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+      <header className="animate-fade-in stagger-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+        <div>
+          <h1 style={{ fontSize: "2rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <SettingsIcon color="var(--accent-primary)" /> Application Settings
+          </h1>
+          <p style={{ color: "var(--foreground-muted)" }}>Customize your typing experience constraints.</p>
         </div>
-        <button className="glass-button" style={{ padding: "0.5rem 1.5rem" }} onClick={() => router.push("/")}>
-          ← RETURN HOME
+        <button className="app-button" style={{ padding: "0.5rem 1.5rem" }} onClick={() => router.push("/")}>
+          <ArrowLeft size={16} /> Dashboard
         </button>
-      </div>
+      </header>
 
-      <div className="animate-step-in stagger-2" style={{ display: "flex", flexDirection: "column", gap: "2rem", flex: 1, maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+      <div className="animate-fade-in stagger-2" style={{ display: "flex", flexDirection: "column", gap: "2rem", flex: 1, width: "100%" }}>
         
         {/* OPTION = FONT */}
-        <div className="glass-panel" style={{ padding: "2rem" }}>
-          <div className="text-gradient" style={{ marginBottom: "1.5rem", fontWeight: 600, letterSpacing: "2px" }}>{"// TYPOGRAPHY_SCALE"}</div>
-          <div style={{ display: "flex", gap: "1rem" }}>
+        <div className="app-card" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+            <Type size={20} color="var(--foreground-muted)" />
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 600 }}>Typography Scale</h2>
+          </div>
+          <p style={{ color: "var(--foreground-muted)", marginBottom: "1.5rem", fontSize: "0.9rem" }}>Adjust the font size of the typing container text.</p>
+          
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             {["MEDIUM", "LARGE", "EXTRA_LARGE"].map((size) => (
               <button
                 key={size}
-                className={`glass-button ${fontSize === size ? "active" : ""}`}
-                style={{ padding: "1rem 2rem", flex: 1 }}
+                className={`app-button ${fontSize === size ? "primary" : ""}`}
+                style={{ padding: "0.75rem 1.5rem", flex: "1 1 120px" }}
                 onClick={() => setFontSize(size as FontSizeOption)}
               >
-                {size}
+                {size.replace("_", " ")}
               </button>
             ))}
           </div>
         </div>
 
         {/* OPTION = CURSOR */}
-        <div className="glass-panel" style={{ padding: "2rem" }}>
-          <div className="text-gradient" style={{ marginBottom: "1.5rem", fontWeight: 600, letterSpacing: "2px" }}>{"// CURSOR_STYLE"}</div>
-          <div style={{ display: "flex", gap: "1rem" }}>
+        <div className="app-card" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+            <MousePointer2 size={20} color="var(--foreground-muted)" />
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 600 }}>Cursor Style</h2>
+          </div>
+           <p style={{ color: "var(--foreground-muted)", marginBottom: "1.5rem", fontSize: "0.9rem" }}>Change the global mouse cursor appearance.</p>
+
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             {["CROSSHAIR", "BLOCK", "LINE"].map((style) => (
               <button
                 key={style}
-                className={`glass-button ${cursorStyle === style ? "active" : ""}`}
-                style={{ padding: "1rem 2rem", flex: 1 }}
+                className={`app-button ${cursorStyle === style ? "primary" : ""}`}
+                style={{ padding: "0.75rem 1.5rem", flex: "1 1 120px" }}
                 onClick={() => setCursorStyle(style as CursorStyleOption)}
               >
                 {style}
@@ -63,21 +77,29 @@ export default function SettingsPage() {
         </div>
 
         {/* OPTION = ERROR */}
-        <div className="glass-panel" style={{ padding: "2rem" }}>
-          <div className="text-gradient" style={{ marginBottom: "1.5rem", fontWeight: 600, letterSpacing: "2px" }}>{"// ERROR_STOP_MODE"}</div>
+        <div className="app-card" style={{ padding: "2rem" }}>
+           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+            <AlertTriangle size={20} color={stopOnError ? "var(--accent-danger)" : "var(--foreground-muted)"} />
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 600 }}>Strict Mode</h2>
+          </div>
+          <p style={{ color: "var(--foreground-muted)", marginBottom: "1.5rem", fontSize: "0.9rem" }}>When enabled, the engine will block further input until previous typos are corrected.</p>
+
           <button
-            className={`glass-button ${stopOnError ? "danger active" : ""}`}
-            style={{ padding: "1.2rem 2rem", width: "100%", textAlign: "left", display: "flex", justifyContent: "space-between" }}
+            className={`app-button ${stopOnError ? "danger active" : ""}`}
+            style={{ padding: "1rem 1.5rem", width: "100%", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
             onClick={() => setStopOnError(!stopOnError)}
           >
-            <span>{stopOnError ? "STRICT MODE" : "NORMAL MODE"}</span>
-            <span style={{ color: stopOnError ? "var(--foreground)" : "var(--foreground-muted)", fontWeight: 400 }}>
-               {stopOnError ? "Engine will halt upon typo detection." : "Engine allows typos with error penalties."}
+            <span style={{ fontWeight: 600 }}>{stopOnError ? "Strict Mode Enabled" : "Normal Mode"}</span>
+            <span style={{ color: stopOnError ? "#FFFFFF" : "var(--foreground-muted)", fontSize: "0.85rem", fontWeight: 400 }}>
+               Toggle Constraint
              </span>
           </button>
         </div>
 
       </div>
+      
+      {/* Spacer */}
+      <div style={{ height: "80px" }} />
     </div>
   );
 }

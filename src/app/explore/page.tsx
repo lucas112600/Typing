@@ -6,6 +6,7 @@ import { SystemLogPubSub } from "@/lib/systemLog";
 import Logo from "@/components/Logo";
 import { mockData, Category1, Category2, Entry } from "@/lib/mockData";
 import { generateText } from "@/lib/generator";
+import { ArrowLeft, BrainCircuit, Library, FileText, Bot } from "lucide-react";
 
 export default function ExplorePage() {
   const router = useRouter();
@@ -28,87 +29,89 @@ export default function ExplorePage() {
     router.push("/practice");
   };
 
-
-
   const entries = mockData[cat1][cat2] || [];
 
   return (
-    <div style={{ padding: "4rem", display: "flex", flexDirection: "column", height: "100%", zIndex: 10, position: "relative" }}>
+    <div style={{ padding: "4rem 2rem", display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
       {/* HEADER / NAVIGATION */}
-      <div className="glass-panel animate-step-in stagger-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 2rem", marginBottom: "2rem" }}>
-        <Logo size={42} />
+      <header className="animate-fade-in stagger-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+        <Logo size={36} />
         <div style={{ display: "flex", gap: "1rem" }}>
           <button 
-            className={`glass-button ${cat1 === "ZH_CHINESE" ? "active" : ""}`}
+            className={`app-button ${cat1 === "ZH_CHINESE" ? "active" : ""}`}
             style={{ padding: "0.5rem 1.5rem" }}
             onClick={() => setCat1("ZH_CHINESE")}
           >
             中文 ZH
           </button>
           <button 
-             className={`glass-button ${cat1 === "EN_ENGLISH" ? "active" : ""}`}
+             className={`app-button ${cat1 === "EN_ENGLISH" ? "active" : ""}`}
             style={{ padding: "0.5rem 1.5rem" }}
             onClick={() => setCat1("EN_ENGLISH")}
           >
             English EN
           </button>
         </div>
-      </div>
+      </header>
 
-      <div style={{ display: "flex", gap: "2rem", flex: 1, overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: "2.5rem", flex: 1, alignItems: "flex-start" }}>
         {/* SIDEBAR SUB NAV */}
-        <div className="glass-panel animate-step-in stagger-2" style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "2rem", width: "250px" }}>
-          {["NEWS_FEED", "ARCHIVE", "AI_FORGE"].map((c) => (
-            <button
-              key={c}
-              className={`glass-button ${cat2 === c ? "active" : ""}`}
-              style={{
-                padding: "1rem",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-              onClick={() => setCat2(c as Category2)}
-            >
-              <span>{c.replace("_", " ")}</span>
-              {cat2 === c && <span style={{ color: "var(--accent-secondary)" }}>●</span>}
-            </button>
-          ))}
+        <aside className="app-card animate-fade-in stagger-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem", padding: "1.5rem", width: "260px" }}>
           
-          <div style={{ flex: 1 }} />
-          <button className="glass-button" style={{ padding: "1rem", textAlign: "center" }} onClick={() => router.push("/")}>
-            ← RETURN HOME
+          <button
+            className={`app-button ${cat2 === "NEWS_FEED" ? "primary" : ""}`}
+            style={{ padding: "1rem", textAlign: "left", justifyContent: "flex-start" }}
+            onClick={() => setCat2("NEWS_FEED")}
+          >
+            <FileText size={18} /> News Feed
           </button>
-        </div>
+          
+          <button
+            className={`app-button ${cat2 === "ARCHIVE" ? "primary" : ""}`}
+            style={{ padding: "1rem", textAlign: "left", justifyContent: "flex-start" }}
+            onClick={() => setCat2("ARCHIVE")}
+          >
+            <Library size={18} /> Archive Classics
+          </button>
 
-        {/* LIST OR FORGE */}
-        <div className="glass-panel animate-step-in stagger-3" style={{ flex: 1, padding: "2rem", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-          <h2 className="text-gradient" style={{ fontSize: "1.5rem", marginBottom: "2rem", letterSpacing: "2px" }}>
-             {"// " + cat2.replace("_", " ")}
+          <div style={{ height: "1px", backgroundColor: "var(--border)", margin: "1rem 0" }} />
+
+          <button
+            className={`app-button ${cat2 === "AI_FORGE" ? "primary" : ""}`}
+            style={{ padding: "1rem", textAlign: "left", justifyContent: "flex-start" }}
+            onClick={() => setCat2("AI_FORGE")}
+          >
+            <Bot size={18} /> AI Generate (Forge)
+          </button>
+          
+          <div style={{ flex: 1, minHeight: "4rem" }} />
+          <button className="app-button" style={{ padding: "1rem", justifyContent: "center" }} onClick={() => router.push("/")}>
+            <ArrowLeft size={16} /> Dashboard
+          </button>
+        </aside>
+
+        {/* MAIN LIST OR FORGE */}
+        <div className="animate-fade-in stagger-3" style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "transparent" }}>
+          
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "2rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+             {cat2 === "NEWS_FEED" && <FileText />}
+             {cat2 === "ARCHIVE" && <Library />}
+             {cat2 === "AI_FORGE" && <Bot />}
+             {cat2.replace("_", " ")}
           </h2>
 
           {cat2 === "AI_FORGE" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", maxWidth: "600px", margin: "0 auto", width: "100%", flex: 1, justifyContent: "center" }}>
-              <div className="text-gradient-primary" style={{ fontSize: "1.2rem", fontWeight: 600 }}>ENTER GENERATION DIRECTIVES:</div>
+            <div className="app-card" style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>Enter Topic Prompt</div>
               <input 
-                className="mono-text"
+                className="app-input"
                 disabled={generating}
                 style={{
                   width: "100%",
-                  padding: "1.5rem",
-                  fontSize: "1.2rem",
-                  backgroundColor: "rgba(0,0,0,0.3)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "12px",
-                  color: "var(--foreground)",
-                  outline: "none",
-                  transition: "all 0.3s ease",
-                  opacity: generating ? 0.5 : 1
+                  padding: "1.25rem",
+                  fontSize: "1.1rem"
                 }}
-                placeholder="e.g. Quantum Computing..."
-                onFocus={(e) => e.target.style.borderColor = "var(--accent-secondary)"}
-                onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+                placeholder="e.g. History of Computing..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     const val = e.currentTarget.value;
@@ -126,50 +129,58 @@ export default function ExplorePage() {
                   }
                 }}
               />
-              <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>{generating ? "Synthesizing text arrays..." : "Press ENTER to initiate synthesis engine."}</div>
+              <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {generating ? <BrainCircuit className="animate-pulse" size={16} /> : <BrainCircuit size={16} />}
+                {generating ? "Synthesizing document..." : "Press ENTER to generate custom practice material."}
+              </div>
             </div>
           ) : entries.length === 0 ? (
-            <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", opacity: 0.5 }}>
-              <h2>NO DATA FOUND IN CLUSTER</h2>
+            <div className="app-card" style={{ padding: "4rem", textAlign: "center", color: "var(--foreground-muted)" }}>
+              No documents available in this category.
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {entries.map((entry) => (
                 <div 
                   key={entry.id}
-                  className="glass-button"
+                  className="app-card"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "100px 1fr 100px 150px",
-                    padding: "1.5rem",
+                    gridTemplateColumns: "80px 1fr 80px 120px",
+                    padding: "1.25rem 1.5rem",
                     alignItems: "center",
-                    gap: "1rem",
-                    transition: "all 0.2s ease"
+                    gap: "1.5rem",
+                    cursor: "pointer",
                   }}
                   onClick={() => handleSelect(entry)}
+                  onMouseOver={(e) => e.currentTarget.style.borderColor = "var(--accent-primary)"}
+                  onMouseOut={(e) => e.currentTarget.style.borderColor = "var(--border)"}
                 >
                   <div style={{ 
-                    fontSize: "0.8rem", 
+                    fontSize: "0.75rem", 
                     padding: "4px 8px", 
                     borderRadius: "4px",
-                    background: entry.difficulty === "HARD" ? "rgba(239, 68, 68, 0.2)" : 
-                               entry.difficulty === "CORE" ? "rgba(139, 92, 246, 0.2)" : "rgba(6, 182, 212, 0.2)",
+                    background: entry.difficulty === "HARD" ? "rgba(239, 68, 68, 0.1)" : 
+                               entry.difficulty === "CORE" ? "rgba(37, 99, 235, 0.1)" : "rgba(16, 185, 129, 0.1)",
                     color: entry.difficulty === "HARD" ? "var(--accent-danger)" : 
                            entry.difficulty === "CORE" ? "var(--accent-primary)" : "var(--accent-secondary)",
                     textAlign: "center",
-                    fontWeight: 800
+                    fontWeight: 600
                   }}>
                     {entry.difficulty}
                   </div>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 600 }}>{entry.title}</div>
+                  <div style={{ fontSize: "1.05rem", fontWeight: 500 }}>{entry.title}</div>
                   <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", textAlign: "right" }}>{entry.wordCount} W</div>
-                  <div className="mono-text" style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", textAlign: "right" }}>{entry.source}</div>
+                  <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entry.source}</div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+      
+      {/* Spacer */}
+      <div style={{ height: "80px" }} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { getStats, StatSession } from "@/lib/statsStore";
+import { ArrowLeft, Activity, Target, Hash } from "lucide-react";
 
 export default function StatsPage() {
   const router = useRouter();
@@ -39,72 +40,87 @@ export default function StatsPage() {
   const avgAcc = sessions.length > 0 ? Math.round(sessions.reduce((a,b)=>a+b.accuracy, 0) / sessions.length) : 0;
 
   return (
-    <div style={{ padding: "4rem", height: "100%", display: "flex", flexDirection: "column", zIndex: 10, position: "relative" }}>
-      <div className="glass-panel animate-step-in stagger-1" style={{ padding: "1rem 2rem", marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div className="text-gradient-primary" style={{ fontSize: "1.8rem", fontWeight: 800 }}>
-          SYSTEM_METRICS
+    <div style={{ padding: "4rem 2rem", minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
+      
+      <header className="animate-fade-in stagger-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+        <div>
+          <h1 style={{ fontSize: "2rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Activity color="var(--accent-primary)" /> Performance Metrics
+          </h1>
+          <p style={{ color: "var(--foreground-muted)" }}>Historic typing data and learning curvature.</p>
         </div>
-        <button className="glass-button" style={{ padding: "0.5rem 1.5rem" }} onClick={() => router.push("/")}>
-          ← RETURN HOME
+        <button className="app-button" style={{ padding: "0.5rem 1.5rem" }} onClick={() => router.push("/")}>
+          <ArrowLeft size={16} /> Dashboard
         </button>
+      </header>
+
+      <div className="animate-fade-in stagger-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem", marginBottom: "3rem" }}>
+        <div className="app-card" style={{ padding: "2rem", display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div style={{ padding: "1rem", backgroundColor: "var(--ring)", borderRadius: "12px", color: "var(--accent-primary)" }}>
+            <Activity size={32} />
+          </div>
+          <div>
+            <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", fontWeight: 500, marginBottom: "0.25rem" }}>Average WPM</div>
+            <div style={{ fontSize: "2.5rem", fontWeight: 700, lineHeight: 1 }}>{avgWpm}</div>
+          </div>
+        </div>
+        <div className="app-card" style={{ padding: "2rem", display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div style={{ padding: "1rem", backgroundColor: "rgba(16, 185, 129, 0.1)", borderRadius: "12px", color: "var(--accent-secondary)" }}>
+             <Target size={32} />
+          </div>
+          <div>
+            <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", fontWeight: 500, marginBottom: "0.25rem" }}>Accuracy Rate</div>
+            <div style={{ fontSize: "2.5rem", fontWeight: 700, lineHeight: 1 }}>{avgAcc}%</div>
+          </div>
+        </div>
+        <div className="app-card" style={{ padding: "2rem", display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div style={{ padding: "1rem", backgroundColor: "var(--surface-hover)", borderRadius: "12px", color: "var(--foreground-muted)" }}>
+             <Hash size={32} />
+          </div>
+          <div>
+            <div style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", fontWeight: 500, marginBottom: "0.25rem" }}>Total Sessions</div>
+            <div style={{ fontSize: "2.5rem", fontWeight: 700, lineHeight: 1 }}>{sessions.length}</div>
+          </div>
+        </div>
       </div>
 
-      <div className="animate-step-in stagger-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem", marginBottom: "3rem" }}>
-        <div className="glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-          <div className="text-gradient" style={{ fontSize: "0.9rem", letterSpacing: "2px", opacity: 0.8, marginBottom: "0.5rem" }}>AVG_WPM / CPM</div>
-          <div className="text-gradient-primary" style={{ fontSize: "4rem", fontWeight: 800 }}>{avgWpm}</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-          <div className="text-gradient" style={{ fontSize: "0.9rem", letterSpacing: "2px", opacity: 0.8, marginBottom: "0.5rem" }}>AVG_ACCURACY</div>
-          <div style={{ fontSize: "4rem", fontWeight: 800, color: "var(--accent-secondary)" }}>{avgAcc}%</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-          <div className="text-gradient" style={{ fontSize: "0.9rem", letterSpacing: "2px", opacity: 0.8, marginBottom: "0.5rem" }}>SESSION_COUNT</div>
-          <div style={{ fontSize: "4rem", fontWeight: 800, color: "var(--foreground)" }}>{sessions.length}</div>
-        </div>
-      </div>
-
-      <div className="glass-panel animate-step-in stagger-3" style={{ flex: 1, position: "relative", padding: "1rem" }}>
-         <div className="text-gradient" style={{ position: "absolute", top: "1.5rem", left: "2rem", fontSize: "0.9rem", letterSpacing: "2px" }}>
-            PERFORMANCE_CURVE (WPM)
-         </div>
-         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "1rem" }}>
-           <svg width="800" height="300" viewBox="0 0 800 300" style={{ overflow: "visible" }}>
+      <div className="app-card animate-fade-in stagger-3" style={{ flex: 1, position: "relative", padding: "2.5rem", minHeight: "400px" }}>
+         <h2 style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: "2rem" }}>
+            Speed Progression Curve
+         </h2>
+         <div style={{ width: "100%", overflowX: "auto" }}>
+           <svg width="800" height="300" viewBox="0 0 800 300" style={{ overflow: "visible", display: "block", margin: "0 auto" }}>
              <defs>
                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                 <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.3" />
+                 <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.2" />
                  <stop offset="100%" stopColor="var(--accent-primary)" stopOpacity="0" />
                </linearGradient>
-               <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                  <feMerge>
-                     <feMergeNode in="coloredBlur"/>
-                     <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-               </filter>
              </defs>
              {/* Grid */}
-             <line x1="0" y1="50" x2="800" y2="50" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4 4" />
-             <line x1="0" y1="150" x2="800" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4 4" />
-             <line x1="0" y1="250" x2="800" y2="250" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4 4" />
+             <line x1="0" y1="50" x2="800" y2="50" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+             <line x1="0" y1="150" x2="800" y2="150" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
+             <line x1="0" y1="250" x2="800" y2="250" stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
              
              {/* Area Fill */}
              <path d={generateArea()} fill="url(#areaGradient)" />
              
              {/* Data Line */}
-             <path d={generatePath()} fill="none" stroke="var(--accent-primary)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
+             <path d={generatePath()} fill="none" stroke="var(--accent-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
              
              {/* Points */}
              {dataPoints.map((val, i) => {
                 const x = dataPoints.length === 1 ? 400 : (i / (dataPoints.length - 1)) * 800;
                 const y = 300 - (((val - min) / range) * 200 + 50);
                 return (
-                  <circle key={i} cx={x} cy={y} r="6" fill="var(--background-start)" stroke="var(--accent-secondary)" strokeWidth="3" filter="url(#glow)" />
+                  <circle key={i} cx={x} cy={y} r="5" fill="var(--surface)" stroke="var(--accent-primary)" strokeWidth="2" />
                 )
              })}
            </svg>
          </div>
       </div>
+      
+      {/* Spacer */}
+      <div style={{ height: "80px" }} />
     </div>
   );
 }
