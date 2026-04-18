@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { mockData, Category1, Category2, Entry } from "@/lib/mockData";
-import { generateText, generateWikiText } from "@/lib/generator";
+import { generateWikiText } from "@/lib/generator";
 import { ArrowLeft, BookOpen, FileText, Bot, Search } from "lucide-react";
 
 export default function ExplorePage() {

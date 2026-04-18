@@ -123,7 +123,7 @@ export async function generateWikiText(language: "en" | "zh", diff: Difficulty, 
         rawText = rawText.replace(/\(.*?\)/g, "").replace(/（.*?）/g, "");
         
         // Apply length constraints like local generator
-        let targetLength = language === "zh" ? (diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250) : (diff === "EASY" ? 50 : diff === "NORMAL" ? 100 : 200);
+        const targetLength = language === "zh" ? (diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250) : (diff === "EASY" ? 50 : diff === "NORMAL" ? 100 : 200);
         
         let finalText = rawText;
         if (language === "en") {
