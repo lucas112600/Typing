@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, Trophy, Medal, Clock, Zap } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 interface ScoreRecord {
   id: string;
@@ -18,8 +20,8 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
+  const fetchLeaderboard = useCallback(async () => {
+    const { data } = await supabase
       .from("leaderboards")
       .select("*")
       .order("wpm", { ascending: false })
@@ -29,10 +31,14 @@ export default function LeaderboardPage() {
       setLeaderboard(data);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchLeaderboard();
+    // Call the async function inside an effect properly
+    const loadData = async () => {
+      await fetchLeaderboard();
+    };
+    loadData();
 
     // Subscribe to real-time updates when new scores are inserted
     const channel = supabase
@@ -49,7 +55,7 @@ export default function LeaderboardPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchLeaderboard]);
 
   return (
     <div className="notion-page animate-fade-in" style={{ maxWidth: "900px", margin: "0 auto", padding: "4rem 2rem" }}>

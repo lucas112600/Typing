@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
 import { ArrowLeft } from "lucide-react";
 import audioManager from "@/lib/audioManager";
+import { RealtimeChannel } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
 
 interface Player {
+  id: string;
+  name: string;
+  ready: boolean;
+  progress: number;
+  wpm: number;
+  finished: boolean;
+}
+
+interface PresenceMetadata {
   id: string;
   name: string;
   ready: boolean;
@@ -36,7 +48,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [isFinished, setIsFinished] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     const channel = supabase.channel(`room:${roomId}`, {
@@ -51,8 +63,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
     channel
       .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const formattedPlayers: Player[] = Object.values(state).flat().map((p: any) => ({
+        const state = channel.presenceState<PresenceMetadata>();
+        const formattedPlayers: Player[] = Object.values(state).flat().map((p) => ({
           id: p.id,
           name: p.name,
           ready: p.ready,
@@ -63,9 +75,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         setPlayers(formattedPlayers);
         
         // If we were loading, we are now synced
-        if (gameState === "LOADING") {
-          setGameState("LOBBY");
-        }
+        setGameState(current => current === "LOADING" ? "LOBBY" : current);
       })
       .on("broadcast", { event: "race_event" }, ({ payload }) => {
         if (payload.type === "START_COUNTDOWN") {
@@ -96,7 +106,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     return () => {
       channel.unsubscribe();
     };
-  }, [roomId, userId, nickname]);
+  }, [roomId, userId, nickname]); // gameState is used via functional update in setGameState, so no dependency needed there
 
   useEffect(() => {
     if (audioManager) {
@@ -104,7 +114,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     }
   }, [soundVolume]);
 
-  const toggleReady = async () => {
+  const toggleReady = useCallback(async () => {
+    if (!channelRef.current) return;
     const me = players.find(p => p.id === userId);
     const newReady = !me?.ready;
     
@@ -117,28 +128,25 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       finished: false,
     });
 
-    // Simple host logic: if everyone is ready and we are the first player, start countdown
     const otherPlayers = players.filter(p => p.id !== userId);
     const allOthersReady = otherPlayers.every(p => p.ready);
     
     if (newReady && allOthersReady && players.length >= 1) {
-       // Broadcast start
        channelRef.current.send({
          type: "broadcast",
          event: "race_event",
          payload: { type: "START_COUNTDOWN" }
        });
 
-       // Trigger start race after 5s
        setTimeout(() => {
-         channelRef.current.send({
+         channelRef.current?.send({
            type: "broadcast",
            event: "race_event",
            payload: { type: "START_RACE" }
          });
        }, 5000);
     }
-  };
+  }, [players, userId, nickname]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") router.push("/pvp");
@@ -150,7 +158,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (gameState !== "RACING" || isFinished) return;
+    if (gameState !== "RACING" || isFinished || !channelRef.current) return;
     const val = e.target.value;
 
     if (!isComposing) {
@@ -173,8 +181,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     const timeMs = Date.now() - (startTime || 0);
     const wpm = Math.round((val.length / 5) / (timeMs / 60000)) || 0;
     
-    // Sync progress via Presence (throttled by track logic automatically in Supabase usually)
-    // To avoid too many track calls, we can broadcast instead for progress
     await channelRef.current.track({
       id: userId,
       name: nickname || `Player ${userId.slice(0, 4)}`,
@@ -188,7 +194,6 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       setIsFinished(true);
       if (soundEnabled) audioManager?.play("finish");
 
-      // Submit to global leaderboard DB
       const finalWpm = wpm;
       const finalAccuracy = Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100));
       
@@ -233,15 +238,16 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     }
   };
 
-  // Synchronize countdown locally as well for smoother UI
   useEffect(() => {
-    let timer: any;
+    let timer: ReturnType<typeof setInterval> | undefined;
     if (gameState === "STARTING" && countdown > 0) {
       timer = setInterval(() => {
         setCountdown(prev => prev - 1);
       }, 1000);
     }
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [gameState, countdown]);
 
   return (
