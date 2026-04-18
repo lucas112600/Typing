@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { mockData, Category1, Category2, Entry } from "@/lib/mockData";
-import { generateText } from "@/lib/generator";
+import { generateText, generateWikiText } from "@/lib/generator";
 import { ArrowLeft, BookOpen, FileText, Bot, Search } from "lucide-react";
 
 export default function ExplorePage() {
@@ -116,13 +116,20 @@ export default function ExplorePage() {
                 setGenerating(true);
                 SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
                 
-                setTimeout(() => {
-                   setGenerating(false);
-                   e.currentTarget.value = "";
-                   SystemLogPubSub.publish("GENERATION_COMPLETE");
-                   const genEntry = generateText(cat1 === "ZH_CHINESE" ? "zh" : "en", "HARD", val);
-                   handleSelect(genEntry);
-                }, 1200);
+                // Using an async wrapper inside the keydown handler
+                const fetchGen = async () => {
+                   try {
+                     const genEntry = await generateWikiText(cat1 === "ZH_CHINESE" ? "zh" : "en", "HARD", val);
+                     setGenerating(false);
+                     SystemLogPubSub.publish("GENERATION_COMPLETE");
+                     setTimeout(() => handleSelect(genEntry), 50);
+                   } catch {
+                     setGenerating(false);
+                   }
+                };
+                
+                fetchGen();
+                e.currentTarget.value = "";
               }
             }}
           />

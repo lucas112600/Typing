@@ -96,3 +96,74 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
     source: "Real Text Knowledge Base"
   };
 }
+
+export async function generateWikiText(language: "en" | "zh", diff: Difficulty, topic: string): Promise<Entry> {
+  try {
+    // Search for the topic
+    const searchRes = await fetch(`https://${language}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&utf8=&format=json&origin=*`);
+    const searchData = await searchRes.json();
+    
+    if (searchData.query && searchData.query.search && searchData.query.search.length > 0) {
+      const bestTitle = searchData.query.search[0].title;
+      // Fetch the page text extract
+      const pageRes = await fetch(`https://${language}.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(bestTitle)}&format=json&origin=*`);
+      const pageData = await pageRes.json();
+      
+      const pages = pageData.query.pages;
+      const pageId = Object.keys(pages)[0];
+      const page = pages[pageId];
+      
+      if (page.extract && page.extract.length > 50) {
+        // We got real text! Clean it up
+        let rawText = page.extract.replace(/\n+/g, " ");
+        // Send it through the slicing logic if needed or just return if it's small enough
+        
+        // Strip out brackets often found in wiki e.g., (listen), [1]
+        rawText = rawText.replace(/\[[0-9]+\]/g, "");
+        rawText = rawText.replace(/\(.*?\)/g, "").replace(/（.*?）/g, "");
+        
+        // Apply length constraints like local generator
+        let targetLength = language === "zh" ? (diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : 250) : (diff === "EASY" ? 50 : diff === "NORMAL" ? 100 : 200);
+        
+        let finalText = rawText;
+        if (language === "en") {
+          const tokens = rawText.split(/(?<=\. )/g);
+          let combined = "";
+          for (const sentence of tokens) {
+            if ((combined + sentence).split(" ").length > targetLength * 1.5) {
+              if (combined.length === 0) combined = sentence;
+              break;
+            }
+            combined += sentence;
+          }
+          finalText = combined.trim();
+        } else {
+          const tokens = rawText.split(/(?<=[。！？])/g);
+          let combined = "";
+          for (const sentence of tokens) {
+            if (combined.length + sentence.length > targetLength * 1.5) {
+              if (combined.length === 0) combined = sentence;
+              break;
+            }
+            combined += sentence;
+          }
+          finalText = combined.trim();
+        }
+
+        return {
+          id: `wiki-${Date.now()}`,
+          title: page.title,
+          text: finalText,
+          difficulty: diff === "NORMAL" ? "CORE" : diff,
+          wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
+          source: `Wikipedia (${language.toUpperCase()})`
+        };
+      }
+    }
+    // Fallback appropriately if fetch empty
+    return generateText(language, diff, topic);
+  } catch (error) {
+    console.error("Wikipedia API fetch failed:", error);
+    return generateText(language, diff, topic);
+  }
+}
