@@ -11,7 +11,9 @@ export default function StatsPage() {
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_STATS_READY");
-    setSessions(getStats());
+    setTimeout(() => {
+      setSessions(getStats());
+    }, 0);
   }, []);
 
   const dataPoints = sessions.length > 0 ? sessions.map(s => s.wpm) : [0];

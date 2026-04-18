@@ -146,7 +146,7 @@ export default function ExplorePage() {
             <div style={{ opacity: 0.5, letterSpacing: "2px" }}>PRESS ENTER TO INITIATE SYNTHESIS.</div>
           </div>
         ) : entries.length === 0 ? (
-          <div style={{ opacity: 0.5, letterSpacing: "2px" }}>// NO_DATA</div>
+          <div style={{ opacity: 0.5, letterSpacing: "2px" }}>{"// NO_DATA"}</div>
         ) : (
           entries.map((entry) => (
             <div 
