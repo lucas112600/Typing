@@ -1,12 +1,10 @@
-import { fetchDailyNews } from "@/lib/newsApi";
+
 import HomeInteraction from "@/components/HomeInteraction";
 
-export default async function Home() {
-  const newsItem = await fetchDailyNews();
-
+export default function Home() {
   return (
     <main style={{ height: "100vh", width: "100%", overflow: "hidden" }}>
-      <HomeInteraction newsItem={newsItem} />
+      <HomeInteraction />
     </main>
   );
 }

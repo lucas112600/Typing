@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import Logo from "@/components/Logo";
 import { mockData, Category1, Category2, Entry } from "@/lib/mockData";
+import { generateText } from "@/lib/generator";
 
 export default function ExplorePage() {
   const router = useRouter();
@@ -27,79 +28,7 @@ export default function ExplorePage() {
     router.push("/practice");
   };
 
-  const generateChineseAI = (prompt: string): Entry => {
-    // Procedurally generated Chinese
-    const starters = [
-      `關於${prompt}的發展，`,
-      `很多人認為${prompt}是一個有趣的議題。`,
-      `隨著技術進步，${prompt}已經成為焦點。`,
-      `探討${prompt}時，我們必須注意幾個關鍵。`
-    ];
-    const middles = [
-      "首先，它深刻影響了我們的日常生活。不僅提高了效率，還改變了原有的模式。",
-      "其次，這個現象在短期內會帶來許多挑戰，但也充滿著機遇。",
-      "在各行各業中，這項改變都引發了廣泛的討論與實踐。",
-      "此外，研究指出未來的趨勢將會更緊密地與此結合。"
-    ];
-    const ends = [
-      "總結來說，我們需要保持開放的態度來迎接這些變化。",
-      "因此，持續學習與適應將是下一個十年的必修課。",
-      "這提醒著我們，在追求創新的同時也不應忽視潛在的風險。",
-      "未來會如何發展，讓我們拭目以待。"
-    ];
-    
-    // Deterministic selection based on prompt length and chars
-    const hash = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const start = starters[hash % starters.length];
-    const mid1 = middles[(hash + 1) % middles.length];
-    const mid2 = middles[(hash + 2) % middles.length];
-    const end = ends[hash % ends.length];
 
-    const generatedText = start + mid1 + mid2 + end;
-
-    return {
-      id: "forge-" + Date.now(),
-      difficulty: "HARD",
-      title: `生成的文本: ${prompt}`,
-      wordCount: generatedText.length,
-      source: "NEURAL_FORGE_PROCEDURAL",
-      text: generatedText
-    };
-  };
-
-  const generateEnglishAI = (prompt: string): Entry => {
-    const starters = [
-      `The evolution of ${prompt} has been remarkable.`,
-      `Many experts consider ${prompt} to be a critical turning point.`,
-      `When we look closely at ${prompt}, several patterns emerge.`
-    ];
-    const middles = [
-      " First and foremost, the operational efficiency achieved is unparalleled. Industries are rapidly adapting to these new paradigms.",
-      " Furthermore, the underlying technology offers tremendous opportunities, despite the obvious logistical hurdles.",
-      " As adoption increases, the need for robust architectural frameworks becomes increasingly apparent."
-    ];
-    const ends = [
-      " In conclusion, remaining agile will be key to navigating this landscape.",
-      " Ultimately, this reminds us that innovation and security must go hand in hand.",
-      " The coming years will undoubtedly reveal the true impact of these changes."
-    ];
-
-    const hash = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const start = starters[hash % starters.length];
-    const mid = middles[(hash + 1) % middles.length];
-    const end = ends[hash % ends.length];
-
-    const generatedText = start + mid + end;
-
-    return {
-      id: "forge-" + Date.now(),
-      difficulty: "HARD",
-      title: `SYNTHESIS: ${prompt}`,
-      wordCount: generatedText.split(' ').length,
-      source: "NEURAL_FORGE_PROCEDURAL",
-      text: generatedText
-    };
-  };
 
   const entries = mockData[cat1][cat2] || [];
 
@@ -191,7 +120,7 @@ export default function ExplorePage() {
                        setGenerating(false);
                        e.currentTarget.value = "";
                        SystemLogPubSub.publish("GENERATION_COMPLETE");
-                       const genEntry = cat1 === "ZH_CHINESE" ? generateChineseAI(val) : generateEnglishAI(val);
+                       const genEntry = generateText(cat1 === "ZH_CHINESE" ? "zh" : "en", "HARD", val);
                        handleSelect(genEntry);
                     }, 1200);
                   }

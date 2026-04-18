@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import Cursor from "@/components/Cursor";
-import SystemLog from "@/components/SystemLog";
+import SystemStatus from "@/components/SystemStatus";
 import { ConfigProvider } from "@/context/ConfigContext";
 
 const outfit = Outfit({ subsets: ["latin"], weight: ["300", "400", "600", "800"], variable: "--font-outfit" });
@@ -25,7 +25,7 @@ export default function RootLayout({
         <ConfigProvider>
           <Cursor />
           {children}
-          <SystemLog />
+          <SystemStatus />
         </ConfigProvider>
       </body>
     </html>

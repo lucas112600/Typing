@@ -3,49 +3,37 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
-import type { NewsItem } from "@/lib/newsApi";
 import Logo from "@/components/Logo";
+import { generateText, Difficulty } from "@/lib/generator";
 
-type Mode = "DAILY" | "RANDOM" | "CUSTOM";
-
-export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | null }) {
+export default function HomeInteraction() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("DAILY");
-  const [customText, setCustomText] = useState("");
+  const [lang, setLang] = useState<"en" | "zh">("zh");
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_READY");
   }, []);
 
-  const handleStart = () => {
-    let practiceData = null;
+  const handleStart = (difficulty?: Difficulty) => {
+    if (generating) return;
+    setGenerating(true);
+    SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
 
-    if (mode === "DAILY" && newsItem) {
-      practiceData = newsItem;
-    } else if (mode === "RANDOM") {
-      const quotes = [
-        "The quick brown fox jumps over the lazy dog.",
-        "To be or not to be, that is the question.",
-        "All that glitters is not gold.",
-        "Code is poems written for machines to read."
-      ];
-      const randomQ = quotes[Math.floor(Math.random() * quotes.length)];
-      practiceData = { title: "Random Quote", description: randomQ, text: randomQ };
-    } else if (mode === "CUSTOM") {
-      if (!customText || customText.trim() === "") {
-        SystemLogPubSub.publish("ERR_CUSTOM_TEXT_EMPTY");
-        return;
-      }
-      practiceData = { title: "Custom Text", description: "User inputted text", text: customText.trim() };
-    } else if (mode === "DAILY" && !newsItem) {
-       practiceData = { title: "Fallback Pick", description: "No daily pick available.", text: "The quick brown fox jumps over the lazy dog." };
-    }
-
-    if (practiceData) {
-      sessionStorage.setItem("typing_practice_data", JSON.stringify(practiceData));
+    setTimeout(() => {
+      // If difficulty provided, use it. Otherwise, randomly select one for Quick Play
+      const diffLevels: Difficulty[] = ["EASY", "NORMAL", "HARD"];
+      const finalDiff = difficulty || diffLevels[Math.floor(Math.random() * diffLevels.length)];
+      
+      const practiceData = generateText(lang, finalDiff, "每日隨機生成");
+      
+      sessionStorage.setItem("typing_practice_data", JSON.stringify({
+        ...practiceData,
+        language: lang
+      }));
       SystemLogPubSub.publish("INITIATE_PRACTICE");
       router.push("/practice");
-    }
+    }, 400); // Small realistic delay
   };
 
   return (
@@ -74,24 +62,33 @@ export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | nul
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3rem", margin: "2rem 0" }}>
         
-        {/* Action Button */}
-        <div className="animate-step-in stagger-2" style={{ zIndex: 10 }}>
+        {/* Language Toggle */}
+        <div className="glass-panel animate-step-in stagger-2" style={{ display: "flex", gap: "0.5rem", padding: "0.5rem" }}>
+          <button className={`glass-button ${lang === "zh" ? "active" : ""}`} onClick={() => setLang("zh")} style={{ padding: "0.5rem 2rem" }}>中文 (ZH)</button>
+          <button className={`glass-button ${lang === "en" ? "active" : ""}`} onClick={() => setLang("en")} style={{ padding: "0.5rem 2rem" }}>English (EN)</button>
+        </div>
+
+        {/* Quick Play Action Button */}
+        <div className="animate-step-in stagger-3" style={{ zIndex: 10, width: "100%", maxWidth: "600px" }}>
            <button 
              className="glass-panel"
-             onClick={handleStart}
+             onClick={() => handleStart()}
              style={{
-               padding: "1.5rem 5rem",
+               width: "100%",
+               padding: "2rem",
                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(6, 182, 212, 0.4) 100%)",
                color: "var(--foreground)",
-               fontSize: "2rem",
-               fontWeight: 800,
-               letterSpacing: "4px",
                border: "1px solid rgba(255,255,255,0.2)",
                cursor: "pointer",
                transition: "all 0.3s ease",
-               boxShadow: "0 8px 32px rgba(139, 92, 246, 0.3)"
+               boxShadow: "0 8px 32px rgba(139, 92, 246, 0.3)",
+               display: "flex",
+               flexDirection: "column",
+               alignItems: "center",
+               gap: "0.5rem"
              }}
              onMouseOver={(e) => {
+               if(generating) return;
                e.currentTarget.style.transform = "translateY(-4px)";
                e.currentTarget.style.boxShadow = "0 12px 40px rgba(6, 182, 212, 0.5)";
              }}
@@ -99,70 +96,37 @@ export default function HomeInteraction({ newsItem }: { newsItem: NewsItem | nul
                e.currentTarget.style.transform = "translateY(0px)";
                e.currentTarget.style.boxShadow = "0 8px 32px rgba(139, 92, 246, 0.3)";
              }}
-             onMouseDown={(e) => e.currentTarget.style.transform = "translateY(2px)"}
-             onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-4px)"}
+             onMouseDown={(e) => { if(!generating) e.currentTarget.style.transform = "translateY(2px)" }}
+             onMouseUp={(e) => { if(!generating) e.currentTarget.style.transform = "translateY(-4px)" }}
            >
-             START
+             <span style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "4px" }}>
+               {generating ? "SYNTHESIZING..." : "QUICK START"}
+             </span>
+             <span style={{ opacity: 0.8, fontWeight: 500 }}>
+               One Click {lang === "zh" ? "自動生成隨機文章" : "Auto-Generate Random Practice"}
+             </span>
            </button>
         </div>
 
-        {/* Mode Selector */}
-        <div className="glass-panel animate-step-in stagger-3" style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap", zIndex: 10, padding: "0.5rem" }}>
-          <button className={`glass-button ${mode === "DAILY" ? "active" : ""}`} style={{ padding: "0.75rem 2rem" }} onClick={() => setMode("DAILY")}>Daily Pick</button>
-          <button className={`glass-button ${mode === "RANDOM" ? "active" : ""}`} style={{ padding: "0.75rem 2rem" }} onClick={() => setMode("RANDOM")}>Random Quote</button>
-          <button className={`glass-button ${mode === "CUSTOM" ? "active" : ""}`} style={{ padding: "0.75rem 2rem" }} onClick={() => setMode("CUSTOM")}>Custom Text</button>
+        {/* Difficulty Selector */}
+        <div className="glass-panel animate-step-in stagger-4" style={{ width: "100%", maxWidth: "600px", padding: "2rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem" }}>
+          <div className="text-gradient" style={{ fontSize: "14px", letterSpacing: "3px", fontWeight: 600 }}>CATEGORY TRAINING</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", width: "100%" }}>
+            <button className="glass-button" disabled={generating} style={{ padding: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }} onClick={() => handleStart("EASY")}>
+              <span style={{ color: "var(--accent-secondary)", fontWeight: 800 }}>EASY</span>
+              <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>~50 words</span>
+            </button>
+            <button className="glass-button" disabled={generating} style={{ padding: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }} onClick={() => handleStart("NORMAL")}>
+              <span style={{ color: "var(--accent-primary)", fontWeight: 800 }}>NORMAL</span>
+              <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>~100 words</span>
+            </button>
+            <button className="glass-button" disabled={generating} style={{ padding: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }} onClick={() => handleStart("HARD")}>
+              <span style={{ color: "var(--accent-danger)", fontWeight: 800 }}>HARD</span>
+              <span style={{ fontSize: "0.8rem", opacity: 0.6 }}>~200 words</span>
+            </button>
+          </div>
         </div>
 
-        {/* Mode Settings / Dynamic Area */}
-        <div className="glass-panel animate-step-in stagger-4" style={{ minHeight: "160px", width: "100%", maxWidth: "800px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", zIndex: 10, padding: "2rem" }}>
-          {mode === "DAILY" && (
-             <div style={{ animation: "fade-slide-up 0.4s ease" }}>
-               <div className="text-gradient" style={{ fontSize: "14px", letterSpacing: "3px", fontWeight: 600, marginBottom: "1rem" }}>TODAY&apos;S ARTICLE</div>
-               {newsItem ? (
-                 <>
-                   <h2 className="text-gradient-primary" style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: "1rem", lineHeight: 1.2 }}>{newsItem.title}</h2>
-                   <p style={{ fontSize: "1rem", fontWeight: 400, opacity: 0.8, color: "var(--foreground-muted)", maxWidth: "600px" }}>{newsItem.description.substring(0, 120)}...</p>
-                 </>
-               ) : (
-                 <h2 className="text-gradient-primary" style={{ fontSize: "1.8rem", fontWeight: 800 }}>FALLBACK ACTIVE</h2>
-               )}
-             </div>
-          )}
-
-          {mode === "RANDOM" && (
-             <div style={{ animation: "fade-slide-up 0.4s ease" }}>
-               <div className="text-gradient" style={{ fontSize: "14px", letterSpacing: "3px", fontWeight: 600, marginBottom: "1rem" }}>RANDOM QUOTE MODE</div>
-               <p style={{ fontSize: "1.2rem", fontWeight: 400, color: "var(--foreground-muted)" }}>A surprisingly profound sequence of English words awaits you.</p>
-             </div>
-          )}
-
-          {mode === "CUSTOM" && (
-             <div style={{ width: "100%", maxWidth: "600px", animation: "fade-slide-up 0.4s ease" }}>
-               <div className="text-gradient" style={{ fontSize: "14px", letterSpacing: "3px", fontWeight: 600, marginBottom: "1rem" }}>CUSTOM INPUT</div>
-               <textarea 
-                 value={customText}
-                 onChange={(e) => setCustomText(e.target.value)}
-                 placeholder="Type or paste your own text here..."
-                 className="mono-text"
-                 style={{
-                   width: "100%",
-                   height: "100px",
-                   backgroundColor: "rgba(0,0,0,0.2)",
-                   border: "1px solid rgba(255,255,255,0.1)",
-                   borderRadius: "12px",
-                   color: "var(--foreground)",
-                   padding: "1rem",
-                   fontSize: "1rem",
-                   resize: "none",
-                   outline: "none",
-                   transition: "border-color 0.2s"
-                 }}
-                 onFocus={(e) => e.target.style.borderColor = "var(--accent-primary)"}
-                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
-               />
-             </div>
-          )}
-        </div>
       </div>
       
       {/* Footer filler */}
