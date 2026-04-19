@@ -12,7 +12,8 @@ export default function PracticePage() {
   const router = useRouter();
   const { fontSize, stopOnError, soundEnabled, soundVolume } = useConfig();
   
-  const [gameState, setGameState] = useState<"SETUP" | "RACING" | "FINISHED">("SETUP");
+  const [gameState, setGameState] = useState<"SETUP" | "STARTING" | "RACING" | "FINISHED">("SETUP");
+  const [countdown, setCountdown] = useState(3);
   
   const [targetText, setTargetText] = useState("");
   const [title, setTitle] = useState("");
@@ -50,18 +51,22 @@ export default function PracticePage() {
             setTimeLimit(data.timeLimit);
             setTimeLeft(data.timeLimit);
           }
-          if (data.text) setGameState("RACING");
+          if (data.text) {
+            setGameState("STARTING");
+            setCountdown(3);
+          }
         } catch (e) {
           console.error("Failed to parse session data", e);
         }
       };
       load();
     }
-    
-    const t = setTimeout(() => {
-       if (gameState === "RACING") inputRef.current?.focus();
-    }, 100);
-    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (gameState === "RACING") {
+       setTimeout(() => inputRef.current?.focus(), 100);
+    }
   }, [gameState]);
 
   useEffect(() => {
@@ -104,11 +109,11 @@ export default function PracticePage() {
     setTargetText(theme.text);
     setTitle(theme.title);
     setLanguage(theme.language);
-    setGameState("RACING");
+    setGameState("STARTING");
+    setCountdown(3);
     setValue("");
     setStartTime(null);
     setErrorCount(0);
-    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -155,6 +160,24 @@ export default function PracticePage() {
         if (soundEnabled) audioManager?.play("finish");
      }
   }, [gameState, targetText, startTime, timeLimit, language, soundEnabled]);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    if (gameState === "STARTING" && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            setGameState("RACING");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [gameState, countdown]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -299,24 +322,44 @@ export default function PracticePage() {
              {timeLeft}s
            </div>
          )}
-         <span>ESC to quit</span>
+          <span>ESC to quit</span>
       </div>
 
-      <div 
-        ref={textContainerRef}
-        className="mono-text" 
-        style={{
-          position: "relative",
-          fontSize: getFontSizeRem(),
-          fontWeight: 500,
-          lineHeight: "1.8",
-          wordBreak: "break-all",
-          whiteSpace: "pre-wrap",
-        }}
-        onClick={() => inputRef.current?.focus()}
-      >
-         <div className="smooth-caret" style={{ left: caretPos.left, top: caretPos.top }} />
-         {renderText()}
+      <div style={{ position: "relative", minHeight: "200px" }}>
+        {gameState === "STARTING" && (
+          <div style={{ 
+              position: "absolute", 
+              inset: 0, 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              zIndex: 10,
+              background: "rgba(255,255,255,0.01)",
+              backdropFilter: "blur(4px)",
+              borderRadius: "12px"
+          }}>
+            <div style={{ fontSize: "8rem", fontWeight: 800, color: "var(--foreground)" }}>{countdown}</div>
+          </div>
+        )}
+
+        <div 
+          ref={textContainerRef}
+          className="mono-text" 
+          style={{
+            position: "relative",
+            fontSize: getFontSizeRem(),
+            fontWeight: 500,
+            lineHeight: "1.8",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+            opacity: gameState === "RACING" ? 1 : 0.2,
+            transition: "opacity 0.5s ease"
+          }}
+          onClick={() => inputRef.current?.focus()}
+        >
+           <div className="smooth-caret" style={{ left: caretPos.left, top: caretPos.top }} />
+           {renderText()}
+        </div>
       </div>
 
       <input
