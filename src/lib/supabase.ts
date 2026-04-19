@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Provide a valid-looking placeholder during build to prevent createClient from throwing
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "empty";
+export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "empty";
 
 // DIAGNOSTICS: Warn if using placeholder
 if (typeof window !== "undefined") {

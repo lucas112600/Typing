@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseUrl } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
 import { ArrowLeft, Settings, Check, AlertCircle } from "lucide-react";
 import audioManager from "@/lib/audioManager";
@@ -393,7 +393,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             <div style={{ color: "var(--foreground-danger)", fontSize: "0.85rem", marginTop: "0.5rem", padding: "1rem", background: "rgba(235, 87, 87, 0.1)", borderRadius: "8px", border: "1px solid var(--foreground-danger)" }}>
               <p><strong>⚠️ Server Response:</strong> {connectionStatus.replace("ERROR: ", "")} </p>
               <div style={{ margin: "0.5rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.2)", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>
-                Target: {supabase.supabaseUrl.replace(/(https?:\/\/[^/]{4})[^/]+/, "$1...")}
+                Target: {supabaseUrl.replace(/(https?:\/\/[^/]{4})[^/]+/, "$1...")}
               </div>
               <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem" }}>
                 <li>Confirm you used the <b>anon / public</b> key from Supabase</li>
