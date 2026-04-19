@@ -18,6 +18,7 @@ interface Player {
   progress: number;
   wpm: number;
   accuracy: number;
+  joinedAt: number;
   finished: boolean;
 }
 
@@ -28,6 +29,7 @@ interface PresenceMetadata {
   progress: number;
   wpm: number;
   accuracy: number;
+  joinedAt: number;
   finished: boolean;
 }
 
@@ -40,6 +42,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [players, setPlayers] = useState<Player[]>([]);
   const [targetText, setTargetText] = useState(THEME_PACKS[0].text);
   const [title, setTitle] = useState(THEME_PACKS[0].title);
+  const [language, setLanguage] = useState<"en" | "zh">("en");
+  const [joinedAt] = useState(() => Date.now());
   const [gameState, setGameState] = useState<"LOADING" | "LOBBY" | "STARTING" | "RACING">("LOADING");
   const [countdown, setCountdown] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -58,6 +62,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const channelRef = useRef<RealtimeChannel | null>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
   const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const didInsertResult = useRef(false);
 
   // Host detection: First person in the players list
   const isHost = players.length > 0 && players[0].id === userId;
@@ -75,16 +80,20 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
     channel
       .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState<PresenceMetadata>();
-        const formattedPlayers: Player[] = Object.values(state).flat().map((p) => ({
-          id: p.id,
-          name: p.name,
-          ready: p.ready,
-          progress: p.progress || 0,
-          wpm: p.wpm || 0,
-          accuracy: p.accuracy || 0,
-          finished: p.finished || false,
-        }));
+        const formattedPlayers: Player[] = Object.values(state)
+          .flat()
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            ready: p.ready,
+            progress: p.progress || 0,
+            wpm: p.wpm || 0,
+            accuracy: p.accuracy || 0,
+            joinedAt: p.joinedAt || 0,
+            finished: p.finished || false,
+          }))
+          .sort((a, b) => a.joinedAt - b.joinedAt);
+
         setPlayers(formattedPlayers);
         setGameState(current => current === "LOADING" ? "LOBBY" : current);
       })
@@ -95,10 +104,12 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         } else if (payload.type === "START_RACE") {
           setGameState("RACING");
           setStartTime(Date.now());
+          didInsertResult.current = false;
           setTimeout(() => inputRef.current?.focus(), 100);
         } else if (payload.type === "THEME_UPDATED") {
           setTargetText(payload.text);
           setTitle(payload.title);
+          setLanguage(payload.language || "en");
         }
       })
       .subscribe(async (status) => {
@@ -113,6 +124,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             progress: 0,
             wpm: 0,
             accuracy: 100,
+            joinedAt,
             finished: false,
           });
         } else if (status === "CHANNEL_ERROR") {
@@ -172,6 +184,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       progress: 0,
       wpm: 0,
       accuracy: 100,
+      joinedAt,
       finished: false,
     });
 
@@ -200,6 +213,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     if (!isHost || !channelRef.current) return;
     setTargetText(theme.text);
     setTitle(theme.title);
+    setLanguage(theme.language);
     setShowSettings(false);
     
     channelRef.current.send({
@@ -208,7 +222,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       payload: { 
         type: "THEME_UPDATED", 
         text: theme.text, 
-        title: theme.title 
+        title: theme.title,
+        language: theme.language
       }
     });
   };
@@ -228,6 +243,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         progress: 0,
         wpm: 0,
         accuracy: 100,
+        joinedAt,
         finished: false,
       });
     }
@@ -266,7 +282,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     const timeMs = Date.now() - (startTime || 0);
     
     // Safety: WPM calculation only after 1 second to avoid Infinity/Spikes
-    const wpm = timeMs > 1000 ? Math.round((val.length / 5) / (timeMs / 60000)) : 0;
+    const wpmDivisor = language === "zh" ? 1 : 5;
+    const wpm = timeMs > 1000 ? Math.round((val.length / wpmDivisor) / (timeMs / 60000)) : 0;
     const accuracy = Math.max(0, 100 - Math.round((errorCount / Math.max(1, val.length)) * 100));
     
     await channelRef.current.track({
@@ -276,11 +293,13 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       progress,
       wpm,
       accuracy,
+      joinedAt,
       finished: val.length >= targetText.length,
     });
 
-    if (val.length >= targetText.length && !isComposing) {
+    if (val.length >= targetText.length && !isComposing && !didInsertResult.current) {
       setIsFinished(true);
+      didInsertResult.current = true;
       if (soundEnabled) audioManager?.play("finish");
 
       const finalWpm = wpm;
