@@ -82,18 +82,22 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<PresenceMetadata>();
-        const formattedPlayers: Player[] = Object.values(state)
-          .flat()
-          .map((p) => ({
+        const playerMap = new Map<string, Player>();
+        
+        Object.values(state).flat().forEach((p) => {
+          playerMap.set(p.id, {
             id: p.id,
             name: p.name,
-            ready: p.ready,
+            ready: p.ready || false,
             progress: p.progress || 0,
             wpm: p.wpm || 0,
-            accuracy: p.accuracy || 0,
+            accuracy: p.accuracy || 100,
             joinedAt: p.joinedAt || 0,
             finished: p.finished || false,
-          }))
+          });
+        });
+
+        const formattedPlayers = Array.from(playerMap.values())
           .sort((a, b) => a.joinedAt - b.joinedAt);
 
         setPlayers(formattedPlayers);
@@ -214,6 +218,24 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
        }, 5000);
     }
   }, [players, userId, nickname, gameState, joinedAt]);
+
+  const startRace = useCallback(() => {
+    if (!isHost || !channelRef.current || players.length < 2) return;
+    
+    channelRef.current.send({
+      type: "broadcast",
+      event: "race_event",
+      payload: { type: "START_COUNTDOWN" }
+    });
+
+    setTimeout(() => {
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "race_event",
+        payload: { type: "START_RACE" }
+      });
+    }, 5000);
+  }, [isHost, players.length]);
 
   const changeTheme = (theme: ThemeText) => {
     if (!isHost || !channelRef.current) return;
@@ -402,7 +424,17 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             </div>
           )}
         </div>
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+           {isHost && gameState === "LOBBY" && (
+             <button 
+               onClick={startRace} 
+               className="app-button primary"
+               disabled={players.length < 2}
+               style={{ padding: "0.5rem 1.5rem", boxShadow: "0 4px 14px 0 rgba(35, 131, 226, 0.39)" }}
+             >
+               Start Match {players.length < 2 ? "(Wait for Players)" : ""}
+             </button>
+           )}
            {isHost && gameState === "LOBBY" && (
              <button onClick={() => setShowSettings(!showSettings)} className="app-button" style={{ width: "fit-content", padding: "0.5rem" }}>
                <Settings size={20} />
@@ -454,8 +486,13 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       <div style={{ marginBottom: "4rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {players.map(player => (
           <div key={player.id} style={{ position: "relative" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.5rem", color: player.id === userId ? "var(--foreground)" : "var(--foreground-muted)" }}>
-              <span>{player.name} {player.id === userId && "(You)"} {player.finished && "🏁"}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", marginBottom: "0.5rem", color: player.id === userId ? "var(--foreground)" : "var(--foreground-muted)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <span>{player.name} {player.id === userId && "(You)"} {player.finished && "🏁"}</span>
+                {gameState === "LOBBY" && player.ready && (
+                  <span style={{ fontSize: "0.6rem", background: "#2383E2", color: "white", padding: "1px 6px", borderRadius: "10px", fontWeight: 800 }}>READY</span>
+                )}
+              </div>
               <span>{player.wpm} WPM · {player.progress}%</span>
             </div>
             <div style={{ height: "4px", background: "var(--bg-secondary)", borderRadius: "2px", overflow: "hidden" }}>
