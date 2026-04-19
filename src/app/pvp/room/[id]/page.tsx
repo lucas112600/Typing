@@ -17,6 +17,7 @@ interface Player {
   ready: boolean;
   progress: number;
   wpm: number;
+  accuracy: number;
   finished: boolean;
 }
 
@@ -26,6 +27,7 @@ interface PresenceMetadata {
   ready: boolean;
   progress: number;
   wpm: number;
+  accuracy: number;
   finished: boolean;
 }
 
@@ -80,6 +82,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           ready: p.ready,
           progress: p.progress || 0,
           wpm: p.wpm || 0,
+          accuracy: p.accuracy || 0,
           finished: p.finished || false,
         }));
         setPlayers(formattedPlayers);
@@ -109,6 +112,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
             ready: false,
             progress: 0,
             wpm: 0,
+            accuracy: 100,
             finished: false,
           });
         } else if (status === "CHANNEL_ERROR") {
@@ -167,6 +171,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       ready: newReady,
       progress: 0,
       wpm: 0,
+      accuracy: 100,
       finished: false,
     });
 
@@ -207,6 +212,26 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       }
     });
   };
+  
+  const resetRace = async () => {
+    setIsFinished(false);
+    setValue("");
+    setErrorCount(0);
+    setStartTime(null);
+    setGameState("LOBBY");
+    
+    if (channelRef.current) {
+      await channelRef.current.track({
+        id: userId,
+        name: nickname || `Player ${userId.slice(0, 4)}`,
+        ready: false,
+        progress: 0,
+        wpm: 0,
+        accuracy: 100,
+        finished: false,
+      });
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") router.push("/pvp");
@@ -242,6 +267,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     
     // Safety: WPM calculation only after 1 second to avoid Infinity/Spikes
     const wpm = timeMs > 1000 ? Math.round((val.length / 5) / (timeMs / 60000)) : 0;
+    const accuracy = Math.max(0, 100 - Math.round((errorCount / Math.max(1, val.length)) * 100));
     
     await channelRef.current.track({
       id: userId,
@@ -249,6 +275,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       ready: true,
       progress,
       wpm,
+      accuracy,
       finished: val.length >= targetText.length,
     });
 
@@ -438,6 +465,56 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           autoFocus spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off"
         />
       </div>
+
+      {isFinished && (
+        <div className="animate-fade-in" style={{
+          marginTop: "4rem",
+          padding: "3rem",
+          background: "var(--bg-secondary)",
+          border: "1px solid var(--border)",
+          borderRadius: "16px",
+          position: "relative"
+        }}>
+          <h2 className="notion-h2" style={{ marginTop: 0, border: "none" }}>Race Results</h2>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
+                <th style={{ padding: "1rem 0", color: "var(--foreground-muted)", fontSize: "0.8rem" }}>RANK</th>
+                <th style={{ padding: "1rem 0", color: "var(--foreground-muted)", fontSize: "0.8rem" }}>PLAYER</th>
+                <th style={{ padding: "1rem 0", color: "var(--foreground-muted)", fontSize: "0.8rem", textAlign: "center" }}>WPM</th>
+                <th style={{ padding: "1rem 0", color: "var(--foreground-muted)", fontSize: "0.8rem", textAlign: "right" }}>ACCURACY</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players
+                .sort((a, b) => {
+                  if (a.finished && !b.finished) return -1;
+                  if (!a.finished && b.finished) return 1;
+                  return b.wpm - a.wpm;
+                })
+                .map((player, index) => (
+                <tr key={player.id} style={{ borderBottom: index === players.length - 1 ? "none" : "1px solid var(--border)" }}>
+                  <td style={{ padding: "1.2rem 0", fontWeight: 700 }}>#{index + 1}</td>
+                  <td style={{ padding: "1.2rem 0", fontWeight: 600 }}>
+                    {player.name} {player.id === userId && "(You)"}
+                    {!player.finished && <span style={{ marginLeft: "8px", fontSize: "0.7rem", padding: "2px 6px", background: "rgba(0,0,0,0.05)", borderRadius: "4px" }}>Racing...</span>}
+                  </td>
+                  <td style={{ padding: "1.2rem 0", textAlign: "center", color: "#E2B714", fontWeight: 800 }}>{player.wpm}</td>
+                  <td style={{ padding: "1.2rem 0", textAlign: "right" }}>{player.accuracy}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: "2rem", display: "flex", gap: "1rem" }}>
+             <button className="app-button primary" onClick={resetRace} style={{ padding: "0.6rem 2rem", width: "fit-content" }}>
+               Play Again
+             </button>
+             <button className="app-button" onClick={() => router.push("/pvp")} style={{ padding: "0.6rem 2rem", width: "fit-content", border: "1px solid var(--border)" }}>
+               Leave Room
+             </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

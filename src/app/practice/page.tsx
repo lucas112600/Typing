@@ -24,6 +24,10 @@ export default function PracticePage() {
   const [language, setLanguage] = useState<"en" | "zh">("en");
   
   // Caret position tracking
+  // Timer State
+  const [timeLimit, setTimeLimit] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  
   // Final Stats for display
   const [finalResult, setFinalResult] = useState({ wpm: 0, accuracy: 0 });
   const [caretPos, setCaretPos] = useState({ left: 0, top: 0 });
@@ -42,6 +46,10 @@ export default function PracticePage() {
           setTargetText(data.text || "");
           setTitle(data.title || "Custom Session");
           setLanguage(data.language || "en");
+          if (data.timeLimit) {
+            setTimeLimit(data.timeLimit);
+            setTimeLeft(data.timeLimit);
+          }
           if (data.text) setGameState("RACING");
         } catch (e) {
           console.error("Failed to parse session data", e);
@@ -117,36 +125,55 @@ export default function PracticePage() {
     }
   };
 
-  const finalizeSession = (finalValue: string, finalErrors: number) => {
+  const finalizeSession = useCallback((finalValue: string, finalErrors: number) => {
     if (gameState === "FINISHED" || targetText.length === 0) return;
     setGameState("FINISHED");
     
     if (startTime) {
-       const timeMs = Date.now() - startTime;
-       const minutes = timeMs / 60000;
-       
-       let correctChars = 0;
-       for (let i = 0; i < targetText.length; i++) {
-         if (finalValue[i] === targetText[i]) correctChars++;
-       }
-       
-       const accuracy = Math.max(0, 100 - (finalErrors / targetText.length) * 100);
-       const wpmDivisor = language === "zh" ? 1 : 5;
-       
-       // Safety: Minimum 1 second for calculation
-       const wpm = timeMs > 1000 ? Math.round((correctChars / wpmDivisor) / minutes) : 0;
-       
-       setFinalResult({ wpm, accuracy: Math.round(accuracy) });
+        const timeMs = Date.now() - startTime;
+        const durationMinutes = timeLimit > 0 ? (timeLimit / 60) : (timeMs / 60000);
+        
+        let correctChars = 0;
+        for (let i = 0; i < finalValue.length; i++) {
+          if (finalValue[i] === targetText[i]) correctChars++;
+        }
+        
+        const accuracy = Math.max(0, 100 - (finalErrors / Math.max(1, finalValue.length)) * 100);
+        const wpmDivisor = language === "zh" ? 1 : 5;
+        
+        // Safety: Minimum 1 second for calculation
+        const wpm = timeMs > 1000 ? Math.round((correctChars / wpmDivisor) / durationMinutes) : 0;
+        
+        setFinalResult({ wpm, accuracy: Math.round(accuracy) });
 
-       appendStat({
-         date: new Date().toISOString(),
-         wpm,
-         accuracy: Math.round(accuracy)
-       });
+        appendStat({
+          date: new Date().toISOString(),
+          wpm,
+          accuracy: Math.round(accuracy)
+        });
 
-       if (soundEnabled) audioManager?.play("finish");
+        if (soundEnabled) audioManager?.play("finish");
+     }
+  }, [gameState, targetText, startTime, timeLimit, language, soundEnabled]);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (gameState === "RACING" && startTime && timeLimit > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (interval) clearInterval(interval);
+            finalizeSession(value, errorCount);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
-  };
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [gameState, startTime, timeLimit, value, errorCount, finalizeSession]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (gameState !== "RACING") return;
@@ -259,8 +286,19 @@ export default function PracticePage() {
       className="notion-page animate-fade-in"
       style={{ maxWidth: "1000px", padding: "6rem 2rem", margin: "0 auto", minHeight: "100vh", position: "relative" }}
     >
-      <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", marginBottom: "4rem", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ color: "var(--foreground-muted)", fontSize: "0.9rem", marginBottom: "4rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
          <span>{title} · {language === "zh" ? "中文" : "English"}</span>
+         {timeLimit > 0 && gameState === "RACING" && (
+           <div style={{ 
+             fontSize: "2rem", 
+             fontWeight: 800, 
+             color: timeLeft <= 5 ? "var(--foreground-danger)" : "#2383E2",
+             transition: "color 0.3s ease",
+             fontFamily: "var(--font-mono)"
+            }}>
+             {timeLeft}s
+           </div>
+         )}
          <span>ESC to quit</span>
       </div>
 

@@ -16,7 +16,7 @@ export default function HomeInteraction() {
     SystemLogPubSub.publish("SYS_READY");
   }, []);
 
-  const handleStart = (difficulty?: Difficulty) => {
+  const handleStart = (difficulty?: Difficulty, timeLimit?: number) => {
     if (generating) return;
     setGenerating(true);
     SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
@@ -32,7 +32,8 @@ export default function HomeInteraction() {
       
       sessionStorage.setItem("typing_practice_data", JSON.stringify({
         ...practiceData,
-        language: lang
+        language: lang,
+        timeLimit: timeLimit || 0
       }));
       SystemLogPubSub.publish("INITIATE_PRACTICE");
       router.push("/practice");
@@ -140,6 +141,27 @@ export default function HomeInteraction() {
            </div>
         </button>
 
+      </div>
+
+      {/* Timed Challenge */}
+      <h2 className="notion-h2">Timed Challenge</h2>
+      <p className="notion-p">Test your speed under pressure with fixed duration tests.</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+        <button className="app-button" onClick={() => handleStart("TIMED", 15)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+           <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>15</span>
+           <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SECONDS</span>
+        </button>
+
+        <button className="app-button" onClick={() => handleStart("TIMED", 30)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+           <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>30</span>
+           <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SECONDS</span>
+        </button>
+
+        <button className="app-button" onClick={() => handleStart("TIMED", 60)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+           <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>60</span>
+           <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SECONDS</span>
+        </button>
       </div>
 
       {/* Target Length Settings */}
