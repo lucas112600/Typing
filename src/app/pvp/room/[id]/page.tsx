@@ -46,6 +46,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const [joinedAt] = useState(() => Date.now());
   const [gameState, setGameState] = useState<"LOADING" | "LOBBY" | "STARTING" | "RACING">("LOADING");
   const [countdown, setCountdown] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<string>("CONNECTING");
   const [showSettings, setShowSettings] = useState(false);
   
   // Typing State
@@ -114,6 +115,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         }
       })
       .subscribe(async (status) => {
+        setConnectionStatus(status);
         if (status === "SUBSCRIBED") {
           // Immediately drop loading state when subscribed
           setGameState(current => current === "LOADING" ? "LOBBY" : current);
@@ -130,6 +132,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           });
         } else if (status === "CHANNEL_ERROR") {
           console.error("Supabase Realtime Channel Error");
+          setGameState("LOADING"); // Keep in loading but status will show error
+        } else if (status === "TIMED_OUT") {
+          setGameState("LOADING");
         }
       });
 
@@ -376,7 +381,24 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             PvP Room / {roomId}
           </div>
-          <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>{gameState === "LOADING" ? "Connecting..." : title}</h2>
+          <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>
+            {gameState === "LOADING" ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {connectionStatus === "CHANNEL_ERROR" ? "Connection Failed" : "Connecting..."}
+                {connectionStatus === "CHANNEL_ERROR" && <AlertCircle size={18} color="var(--foreground-danger)" />}
+              </span>
+            ) : title}
+          </h2>
+          {gameState === "LOADING" && connectionStatus === "CHANNEL_ERROR" && (
+            <div style={{ color: "var(--foreground-danger)", fontSize: "0.85rem", marginTop: "0.5rem", padding: "1rem", background: "rgba(235, 87, 87, 0.1)", borderRadius: "8px", border: "1px solid var(--foreground-danger)" }}>
+              <p><strong>⚠️ Diagnostic:</strong> Realtime connection failed. </p>
+              <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem" }}>
+                <li>Check if <b>NEXT_PUBLIC_SUPABASE_URL</b> is set in Cloudflare</li>
+                <li>Ensure <b>Realtime</b> is enabled in Supabase Dashboard</li>
+                <li>Try <b>Re-deploying</b> on Cloudflare to apply new settings</li>
+              </ul>
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: "1rem" }}>
            {isHost && gameState === "LOBBY" && (
