@@ -80,6 +80,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
 
     channel
       .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState<PresenceMetadata>();
         const formattedPlayers: Player[] = Object.values(state)
           .flat()
           .map((p) => ({
