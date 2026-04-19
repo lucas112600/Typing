@@ -7,10 +7,10 @@ class AudioManager {
   private volume: number = 0.5;
 
   private sounds = {
-    standard: "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3", // Click
-    space: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",    // Thud
-    error: "https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3",   // Sharp click for error
-    finish: "https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3",  // Chime
+    standard: "https://www.soundjay.com/buttons/sounds/button-16.mp3",
+    space: "https://www.soundjay.com/buttons/sounds/button-17.mp3",
+    error: "https://www.soundjay.com/buttons/sounds/button-10.mp3",
+    finish: "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3",
   };
 
   constructor() {

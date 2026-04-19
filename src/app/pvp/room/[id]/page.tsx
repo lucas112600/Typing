@@ -114,8 +114,8 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           setLanguage(payload.language || "en");
         }
       })
-      .subscribe(async (status) => {
-        setConnectionStatus(status);
+      .subscribe(async (status, err) => {
+        setConnectionStatus(err ? `ERROR: ${err.message}` : status);
         if (status === "SUBSCRIBED") {
           // Immediately drop loading state when subscribed
           setGameState(current => current === "LOADING" ? "LOBBY" : current);
@@ -384,22 +384,23 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           <h2 className="notion-h2" style={{ margin: "0.5rem 0" }}>
             {gameState === "LOADING" ? (
               <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                {connectionStatus === "CHANNEL_ERROR" ? "Connection Failed" : "Connecting..."}
-                {connectionStatus === "CHANNEL_ERROR" && <AlertCircle size={18} color="var(--foreground-danger)" />}
+                {connectionStatus.startsWith("ERROR") ? "Connection Rejected" : "Connecting..."}
+                {connectionStatus.startsWith("ERROR") && <AlertCircle size={18} color="var(--foreground-danger)" />}
               </span>
             ) : title}
           </h2>
+          {gameState === "LOADING" && connectionStatus.startsWith("ERROR") && (
             <div style={{ color: "var(--foreground-danger)", fontSize: "0.85rem", marginTop: "0.5rem", padding: "1rem", background: "rgba(235, 87, 87, 0.1)", borderRadius: "8px", border: "1px solid var(--foreground-danger)" }}>
-              <p><strong>⚠️ Diagnostic:</strong> Realtime connection failed. </p>
+              <p><strong>⚠️ Server Response:</strong> {connectionStatus.replace("ERROR: ", "")} </p>
               <div style={{ margin: "0.5rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.2)", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>
-                Current Target: {supabase.supabaseUrl.replace(/(https?:\/\/[^/]{4})[^/]+/, "$1...")}
+                Target: {supabase.supabaseUrl.replace(/(https?:\/\/[^/]{4})[^/]+/, "$1...")}
               </div>
               <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem" }}>
-                <li>Check if <b>NEXT_PUBLIC_SUPABASE_URL</b> is set in Cloudflare</li>
-                <li>Ensure <b>Realtime</b> is enabled in Supabase Dashboard</li>
-                <li>Try <b>Re-deploying</b> on Cloudflare to apply new settings</li>
+                <li>Confirm you used the <b>anon / public</b> key from Supabase</li>
+                <li>Ensure <b>Realtime Settings</b> (Broadcast/Presence) are enabled</li>
               </ul>
             </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: "1rem" }}>
            {isHost && gameState === "LOBBY" && (
