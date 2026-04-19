@@ -220,7 +220,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   }, [players, userId, nickname, gameState, joinedAt]);
 
   const startRace = useCallback(() => {
-    if (!isHost || !channelRef.current || players.length < 2) return;
+    if (!channelRef.current || players.length < 2) return;
     
     channelRef.current.send({
       type: "broadcast",
@@ -235,7 +235,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         payload: { type: "START_RACE" }
       });
     }, 5000);
-  }, [isHost, players.length]);
+  }, [players.length]);
 
   const changeTheme = (theme: ThemeText) => {
     if (!isHost || !channelRef.current) return;
@@ -385,6 +385,16 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   };
 
   useEffect(() => {
+    if (gameState === "RACING") {
+      const focus = () => inputRef.current?.focus();
+      focus();
+      // Second attempt to ensure browser doesn't block it
+      const timer = setTimeout(focus, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState]);
+
+  useEffect(() => {
     let timer: ReturnType<typeof setInterval> | undefined;
     if (gameState === "STARTING" && countdown > 0) {
       timer = setInterval(() => {
@@ -425,14 +435,14 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           )}
         </div>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-           {isHost && gameState === "LOBBY" && (
+           {gameState === "LOBBY" && (
              <button 
                onClick={startRace} 
                className="app-button primary"
                disabled={players.length < 2}
                style={{ padding: "0.5rem 1.5rem", boxShadow: "0 4px 14px 0 rgba(35, 131, 226, 0.39)" }}
              >
-               Start Match {players.length < 2 ? "(Wait for Players)" : ""}
+               {isHost ? "Start Match" : "Force Start"} {players.length < 2 ? "(Waiting...)" : ""}
              </button>
            )}
            {isHost && gameState === "LOBBY" && (
