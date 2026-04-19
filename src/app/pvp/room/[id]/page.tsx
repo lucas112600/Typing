@@ -228,12 +228,22 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       payload: { type: "START_COUNTDOWN" }
     });
 
+    // Start countdown locally for the person who clicks the button
+    setGameState("STARTING");
+    setCountdown(5);
+
     setTimeout(() => {
       channelRef.current?.send({
         type: "broadcast",
         event: "race_event",
         payload: { type: "START_RACE" }
       });
+
+      // Start race locally for the person who clicks the button
+      setGameState("RACING");
+      setStartTime(Date.now());
+      didInsertResult.current = false;
+      setTimeout(() => inputRef.current?.focus(), 100);
     }, 5000);
   }, [players.length]);
 
