@@ -73,60 +73,19 @@ export default function PvPLobby() {
     setLoading(true);
     setError("");
 
-    try {
-      // VALIDATE ROOM EXISTENCE
-      const { data, error: queryError } = await supabase
-        .from("rooms")
-        .select("id")
-        .eq("id", cleanId)
-        .single();
-
-      if (queryError || !data) {
-        console.error("Room Join Error:", queryError);
-        setError(queryError ? `Error: ${queryError.message}` : "Room not found. Check the code.");
-        setLoading(false);
-        return;
-      }
-
-      router.push(`/pvp/room/${cleanId}`);
-    } catch (err) {
-      console.error("Critical Join Error:", err);
-      if (err instanceof TypeError && err.message === "Failed to fetch") {
-        setError("Network Error: Failed to connect to Supabase. Check your internet or NEXT_PUBLIC_SUPABASE_URL.");
-      } else {
-        setError(`System Error: ${err instanceof Error ? err.message : "Possible configuration issue"}`);
-      }
-      setLoading(false);
-    }
+    // SIMPLIFIED: Skip database validation and jump straight to the Realtime room
+    router.push(`/pvp/room/${cleanId}`);
   };
 
   const createQuickRoom = async () => {
     setLoading(true);
+    setError("");
+    // Generate a random 5-character room code
     const id = Math.random().toString(36).substring(2, 7);
     
-    try {
-      // REGISTER ROOM IN DATABASE
-      const { error: insertError } = await supabase
-        .from("rooms")
-        .insert({ id });
-
-      if (insertError) {
-        console.error("Room Creation Error:", insertError);
-        setError(`Failed: ${insertError.message}`);
-        setLoading(false);
-        return;
-      }
-
-      router.push(`/pvp/room/${id}`);
-    } catch (err) {
-      console.error("Critical Creation Error:", err);
-      if (err instanceof TypeError && err.message === "Failed to fetch") {
-        setError("Failed: Network error when connecting to Supabase. Are variables set?");
-      } else {
-        setError(`Failed: ${err instanceof Error ? err.message : "Unknown system error"}`);
-      }
-      setLoading(false);
-    }
+    // SIMPLIFIED: Skip database registration and jump straight to the room
+    // Realtime presence works without pre-registering the room in a table
+    router.push(`/pvp/room/${id}`);
   };
 
   return (
