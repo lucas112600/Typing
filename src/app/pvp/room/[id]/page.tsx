@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useConfig } from "@/context/ConfigContext";
-import { ArrowLeft, Settings, Check } from "lucide-react";
+import { ArrowLeft, Settings, Check, AlertCircle } from "lucide-react";
 import audioManager from "@/lib/audioManager";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
@@ -141,7 +141,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
     return () => {
       channel.unsubscribe();
     };
-  }, [roomId, userId, nickname]);
+  }, [roomId, userId, nickname, joinedAt]);
 
   useEffect(() => {
     if (audioManager) {
@@ -213,7 +213,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
          });
        }, 5000);
     }
-  }, [players, userId, nickname]);
+  }, [players, userId, nickname, gameState, joinedAt]);
 
   const changeTheme = (theme: ThemeText) => {
     if (!isHost || !channelRef.current) return;
