@@ -389,16 +389,17 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
               </span>
             ) : title}
           </h2>
-          {gameState === "LOADING" && connectionStatus === "CHANNEL_ERROR" && (
             <div style={{ color: "var(--foreground-danger)", fontSize: "0.85rem", marginTop: "0.5rem", padding: "1rem", background: "rgba(235, 87, 87, 0.1)", borderRadius: "8px", border: "1px solid var(--foreground-danger)" }}>
               <p><strong>⚠️ Diagnostic:</strong> Realtime connection failed. </p>
+              <div style={{ margin: "0.5rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.2)", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>
+                Current Target: {supabase.supabaseUrl.replace(/(https?:\/\/[^/]{4})[^/]+/, "$1...")}
+              </div>
               <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem" }}>
                 <li>Check if <b>NEXT_PUBLIC_SUPABASE_URL</b> is set in Cloudflare</li>
                 <li>Ensure <b>Realtime</b> is enabled in Supabase Dashboard</li>
                 <li>Try <b>Re-deploying</b> on Cloudflare to apply new settings</li>
               </ul>
             </div>
-          )}
         </div>
         <div style={{ display: "flex", gap: "1rem" }}>
            {isHost && gameState === "LOBBY" && (
