@@ -3,18 +3,15 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type FontSizeOption = "MEDIUM" | "LARGE" | "EXTRA_LARGE";
-export type CursorStyleOption = "CROSSHAIR" | "BLOCK" | "LINE";
 
 interface ConfigState {
   fontSize: FontSizeOption;
-  cursorStyle: CursorStyleOption;
   stopOnError: boolean;
   nickname: string;
   soundEnabled: boolean;
   soundVolume: number;
   uiLang: "en" | "zh";
   setFontSize: (size: FontSizeOption) => void;
-  setCursorStyle: (style: CursorStyleOption) => void;
   setStopOnError: (stop: boolean) => void;
   setNickname: (name: string) => void;
   setSoundEnabled: (enabled: boolean) => void;
@@ -24,14 +21,12 @@ interface ConfigState {
 
 const defaultConfig: ConfigState = {
   fontSize: "LARGE",
-  cursorStyle: "CROSSHAIR",
   stopOnError: false,
   nickname: "",
   soundEnabled: true,
   soundVolume: 0.5,
   uiLang: "en",
   setFontSize: () => {},
-  setCursorStyle: () => {},
   setStopOnError: () => {},
   setNickname: () => {},
   setSoundEnabled: () => {},
@@ -44,68 +39,89 @@ const ConfigContext = createContext<ConfigState>(defaultConfig);
 export const useConfig = () => useContext(ConfigContext);
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
-  const [fontSize, setFontSizeState] = useState<FontSizeOption>("LARGE");
-  const [cursorStyle, setCursorStyleState] = useState<CursorStyleOption>("CROSSHAIR");
-  const [stopOnError, setStopOnErrorState] = useState(false);
-  const [nickname, setNicknameState] = useState("");
-  const [soundEnabled, setSoundEnabledState] = useState(true);
-  const [soundVolume, setSoundVolumeState] = useState(0.5);
-  const [uiLang, setUiLangState] = useState<"en" | "zh">("en");
-
-  // Load from local storage on mount
-  useEffect(() => {
+  const [fontSize, setFontSizeState] = useState<FontSizeOption>(() => {
+    if (typeof window === "undefined") return "LARGE";
     try {
       const stored = localStorage.getItem("TYPING_CONFIG");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // eslint-disable-next-line
-        if (parsed.fontSize) setFontSizeState(parsed.fontSize);
-        if (parsed.cursorStyle) setCursorStyleState(parsed.cursorStyle);
-        if (parsed.stopOnError !== undefined) setStopOnErrorState(parsed.stopOnError);
-        if (parsed.nickname) setNicknameState(parsed.nickname);
-        if (parsed.soundEnabled !== undefined) setSoundEnabledState(parsed.soundEnabled);
-        if (parsed.soundVolume !== undefined) setSoundVolumeState(parsed.soundVolume);
-        if (parsed.uiLang) setUiLangState(parsed.uiLang);
-      }
-    } catch (e) {
-      console.error("Failed to parse config", e);
-    }
-  }, []);
+      if (stored) return JSON.parse(stored).fontSize || "LARGE";
+    } catch { }
+    return "LARGE";
+  });
+
+  const [stopOnError, setStopOnErrorState] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const stored = localStorage.getItem("TYPING_CONFIG");
+      if (stored) return JSON.parse(stored).stopOnError ?? false;
+    } catch { }
+    return false;
+  });
+
+  const [nickname, setNicknameState] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const stored = localStorage.getItem("TYPING_CONFIG");
+      if (stored) return JSON.parse(stored).nickname || "";
+    } catch { }
+    return "";
+  });
+
+  const [soundEnabled, setSoundEnabledState] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const stored = localStorage.getItem("TYPING_CONFIG");
+      if (stored) return JSON.parse(stored).soundEnabled ?? true;
+    } catch { }
+    return true;
+  });
+
+  const [soundVolume, setSoundVolumeState] = useState(() => {
+    if (typeof window === "undefined") return 0.5;
+    try {
+      const stored = localStorage.getItem("TYPING_CONFIG");
+      if (stored) return JSON.parse(stored).soundVolume ?? 0.5;
+    } catch { }
+    return 0.5;
+  });
+
+  const [uiLang, setUiLangState] = useState<"en" | "zh">(() => {
+    if (typeof window === "undefined") return "en";
+    try {
+      const stored = localStorage.getItem("TYPING_CONFIG");
+      if (stored) return JSON.parse(stored).uiLang || "en";
+    } catch { }
+    return "en";
+  });
 
   // Save to local storage on change
   const setFontSize = (v: FontSizeOption) => {
     setFontSizeState(v);
-    saveConfig({ fontSize: v, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang });
-  };
-  const setCursorStyle = (v: CursorStyleOption) => {
-    setCursorStyleState(v);
-    saveConfig({ fontSize, cursorStyle: v, stopOnError, nickname, soundEnabled, soundVolume, uiLang });
+    saveConfig({ fontSize: v, stopOnError, nickname, soundEnabled, soundVolume, uiLang });
   };
   const setStopOnError = (v: boolean) => {
     setStopOnErrorState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError: v, nickname, soundEnabled, soundVolume, uiLang });
+    saveConfig({ fontSize, stopOnError: v, nickname, soundEnabled, soundVolume, uiLang });
   };
   const setNickname = (v: string) => {
     setNicknameState(v);
-    localStorage.setItem("TYPING_NICKNAME", v); // Duplicate for easy access in non-context areas
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname: v, soundEnabled, soundVolume, uiLang });
+    localStorage.setItem("TYPING_NICKNAME", v);
+    saveConfig({ fontSize, stopOnError, nickname: v, soundEnabled, soundVolume, uiLang });
   };
   const setSoundEnabled = (v: boolean) => {
     setSoundEnabledState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled: v, soundVolume, uiLang });
+    saveConfig({ fontSize, stopOnError, nickname, soundEnabled: v, soundVolume, uiLang });
   };
   const setSoundVolume = (v: number) => {
     setSoundVolumeState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume: v, uiLang });
+    saveConfig({ fontSize, stopOnError, nickname, soundEnabled, soundVolume: v, uiLang });
   };
   const setUiLang = (v: "en" | "zh") => {
     setUiLangState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang: v });
+    saveConfig({ fontSize, stopOnError, nickname, soundEnabled, soundVolume, uiLang: v });
   };
 
   const saveConfig = (state: { 
     fontSize: FontSizeOption; 
-    cursorStyle: CursorStyleOption; 
     stopOnError: boolean; 
     nickname: string;
     soundEnabled: boolean;
@@ -116,7 +132,6 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Inject global CSS variables based on config
     const root = document.documentElement;
     let scale = "1";
     if (fontSize === "MEDIUM") scale = "0.8";
@@ -126,8 +141,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ConfigContext.Provider value={{ 
-      fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
-      setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
+      fontSize, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
+      setFontSize, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
     }}>
       {children}
     </ConfigContext.Provider>

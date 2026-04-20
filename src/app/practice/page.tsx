@@ -3,16 +3,19 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig } from "@/context/ConfigContext";
+import { useAuth } from "@/context/AuthContext";
 import { translations } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { appendStat } from "@/lib/statsStore";
 import audioManager from "@/lib/audioManager";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
 import { ArrowLeft, BookOpen, Terminal, Quote, Feather } from "lucide-react";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 export default function PracticePage() {
   const router = useRouter();
   const { fontSize, stopOnError, soundEnabled, soundVolume, nickname, uiLang } = useConfig();
+  const { user, profile } = useAuth();
   const t = translations[uiLang];
   
   const [mode, setMode] = useState<"practice" | "daily">("practice");
@@ -162,11 +165,13 @@ export default function PracticePage() {
         
         setFinalResult({ wpm, accuracy: Math.round(accuracy) });
 
+        const finalizedAccuracy = Math.round(accuracy);
+
         appendStat({
           date: new Date().toISOString(),
           wpm,
-          accuracy: Math.round(accuracy)
-        });
+          accuracy: finalizedAccuracy
+        }, user?.id);
 
         if (soundEnabled) audioManager?.play("finish");
 
@@ -174,12 +179,11 @@ export default function PracticePage() {
         if (mode === "daily") {
           const submitDaily = async () => {
             try {
-              // We use a prefix [DAILY] to identify these in the shared table if no category col exists
-              // If the user adds a 'category' column, this can be updated.
               await supabase.from("leaderboards").insert({
-                name: `[DAILY] ${nickname || "Anonymous"}`,
+                name: `[DAILY] ${profile?.nickname || nickname || "Anonymous"}`,
                 wpm: wpm,
-                accuracy: Math.round(accuracy)
+                accuracy: finalizedAccuracy,
+                user_id: user?.id // Link to user if logged in
               });
             } catch (err) {
               console.error("Daily submission failed", err);
@@ -389,6 +393,9 @@ export default function PracticePage() {
            <div className="smooth-caret" style={{ left: caretPos.left, top: caretPos.top }} />
            {renderText()}
         </div>
+
+        {/* Typing Simulator */}
+        {gameState === "RACING" && <VirtualKeyboard />}
       </div>
 
       <input

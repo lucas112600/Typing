@@ -9,6 +9,8 @@ import audioManager from "@/lib/audioManager";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
 import { translations } from "@/lib/i18n";
+import { useAuth } from "@/context/AuthContext";
+import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +40,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
   const { id: roomId } = use(params);
   const router = useRouter();
   const { fontSize, stopOnError, soundEnabled, soundVolume, nickname, uiLang } = useConfig();
+  const { user, profile } = useAuth();
   const t = translations[uiLang];
   
   const [userId] = useState(() => Math.random().toString(36).substring(2, 9));
@@ -346,9 +349,10 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
       const finalAccuracy = Math.max(0, 100 - Math.round((errorCount / targetText.length) * 100));
       
       await supabase.from("leaderboards").insert({
-        name: nickname || `Player ${userId.slice(0, 4)}`,
+        name: profile?.nickname || nickname || `Player ${userId.slice(0, 4)}`,
         wpm: finalWpm,
-        accuracy: finalAccuracy
+        accuracy: finalAccuracy,
+        user_id: user?.id
       });
     }
   };
@@ -555,6 +559,9 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
           <div className="smooth-caret" style={{ left: caretPos.left, top: caretPos.top }} />
           {renderText()}
         </div>
+
+        {/* Typing Simulator */}
+        {!isFinished && <VirtualKeyboard />}
 
         <input
           ref={inputRef}

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Cursor from "@/components/Cursor";
 import SystemStatus from "@/components/SystemStatus";
 import Footer from "@/components/Footer";
 import { ConfigProvider } from "@/context/ConfigContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Typing",
@@ -18,14 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ConfigProvider>
-          <div className="root-layout-wrapper">
-            <Cursor />
-            {children}
-            <Footer />
-          </div>
-          <SystemStatus />
-        </ConfigProvider>
+        <AuthProvider>
+          <ConfigProvider>
+            <div className="root-layout-wrapper">
+              {children}
+              <Footer />
+            </div>
+            <SystemStatus />
+          </ConfigProvider>
+        </AuthProvider>
       </body>
     </html>
   );

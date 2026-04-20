@@ -3,19 +3,36 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
-import { getStats, StatSession } from "@/lib/statsStore";
-import { ArrowLeft } from "lucide-react";
+import { getStats, fetchRealStats, StatSession } from "@/lib/statsStore";
+import { useAuth } from "@/context/AuthContext";
+import { ArrowLeft, History, Trophy, BarChart3 } from "lucide-react";
 
 export default function StatsPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [sessions, setSessions] = useState<StatSession[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    SystemLogPubSub.publish("SYS_STATS_READY");
-    setTimeout(() => {
-      setSessions(getStats());
-    }, 0);
-  }, []);
+    if (authLoading) return;
+
+    const load = async () => {
+      setLoading(true);
+      SystemLogPubSub.publish("SYS_STATS_READY");
+      
+      let data: StatSession[] = [];
+      if (user) {
+        data = await fetchRealStats(user.id);
+      } else {
+        data = getStats();
+      }
+      
+      setSessions(data);
+      setLoading(false);
+    };
+
+    load();
+  }, [user, authLoading]);
 
   const dataPoints = sessions.length > 0 ? sessions.map(s => s.wpm) : [];
   const max = dataPoints.length > 0 ? Math.max(...dataPoints, 10) : 10;

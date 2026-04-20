@@ -6,10 +6,12 @@ import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
 import { generateText, getDailyChallenge, Difficulty } from "@/lib/generator";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon } from "lucide-react";
 
 export default function HomeInteraction() {
   const router = useRouter();
+  const { user, profile, signOut } = useAuth();
   const { uiLang, setUiLang } = useConfig();
   const t = translations[uiLang];
   
@@ -67,6 +69,49 @@ export default function HomeInteraction() {
   return (
     <div className="notion-page animate-fade-in">
       
+      {/* Auth Status / Identity Header */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "3rem",
+        padding: "1rem",
+        background: "var(--surface-hover)",
+        borderRadius: "var(--radius)",
+        border: "1px solid var(--border)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+          <div style={{ 
+            width: "40px", 
+            height: "40px", 
+            borderRadius: "50%", 
+            background: "var(--surface-active)", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            color: "#2383E2"
+          }}>
+            <UserIcon size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)", fontWeight: 600 }}>IDENTITY</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>
+              {user ? (profile?.nickname || user.email) : "Guest Explorer"}
+            </div>
+          </div>
+        </div>
+        
+        {user ? (
+          <button onClick={() => signOut()} className="app-button" style={{ width: "auto", color: "var(--foreground-danger)" }}>
+            <LogOut size={16} /> Logout
+          </button>
+        ) : (
+          <button onClick={() => router.push("/auth/login")} className="app-button primary" style={{ width: "auto", padding: "0.5rem 1.2rem" }}>
+            <LogIn size={16} /> Login
+          </button>
+        )}
+      </div>
+
       {/* Cover Icon / Title */}
       <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⌨️</div>
       <h1 className="notion-title">{t.hub_title}</h1>

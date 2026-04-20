@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
-import { useConfig, FontSizeOption, CursorStyleOption } from "@/context/ConfigContext";
+import { useConfig, FontSizeOption } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
 import { ArrowLeft, Check } from "lucide-react";
 
@@ -11,8 +11,8 @@ export default function SettingsPage() {
   const router = useRouter();
   
   const { 
-    fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
-    setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
+    fontSize, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
+    setFontSize, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
   } = useConfig();
 
   const t = translations[uiLang];
@@ -96,28 +96,6 @@ export default function SettingsPage() {
             >
                <span>{size.replace("_", " ")}</span>
                {fontSize === size && <Check size={16} color="var(--foreground)" />}
-            </button>
-         ))}
-      </div>
-
-      {/* Cursor Block */}
-      <h2 className="notion-h2">{t.cursor_style}</h2>
-      <p className="notion-p">{t.cursor_desc}</p>
-      <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", overflow: "hidden", marginBottom: "1rem" }}>
-         {["CROSSHAIR", "BLOCK", "LINE"].map((style, idx) => (
-            <button 
-               key={style}
-               className="app-button"
-               style={{ 
-                  borderRadius: 0, 
-                  padding: "0.75rem 1rem", 
-                  borderBottom: idx !== 2 ? "1px solid var(--border)" : "none",
-                  justifyContent: "space-between"
-               }}
-               onClick={() => setCursorStyle(style as CursorStyleOption)}
-            >
-               <span>{style}</span>
-               {cursorStyle === style && <Check size={16} color="var(--foreground)" />}
             </button>
          ))}
       </div>
