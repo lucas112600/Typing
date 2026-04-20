@@ -86,16 +86,22 @@ export default function HomeInteraction() {
     <div className="notion-page animate-fade-in">
       
       {/* Auth Status / Identity Header */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        marginBottom: "3rem",
-        padding: "1rem",
-        background: "var(--surface-hover)",
-        borderRadius: "var(--radius)",
-        border: "1px solid var(--border)"
-      }}>
+      <div 
+        onClick={() => router.push(user ? "/profile" : "/auth/login")}
+        style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          marginBottom: "3rem",
+          padding: "1rem",
+          background: "var(--surface-hover)",
+          borderRadius: "var(--radius)",
+          border: "1px solid var(--border)",
+          cursor: "pointer",
+          transition: "all 0.2s ease"
+        }}
+        className="app-card"
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
           <div style={{ 
             width: "40px", 
@@ -138,11 +144,11 @@ export default function HomeInteraction() {
         </div>
         
         {user ? (
-          <button onClick={() => signOut()} className="app-button" style={{ width: "auto", color: "var(--foreground-danger)" }}>
-            <LogOut size={16} /> Logout
-          </button>
+          <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            View Dashboard <ChevronRight size={14} />
+          </div>
         ) : (
-          <button onClick={() => router.push("/auth/login")} className="app-button primary" style={{ width: "auto", padding: "0.5rem 1.2rem" }}>
+          <button onClick={(e) => { e.stopPropagation(); router.push("/auth/login"); }} className="app-button primary" style={{ width: "auto", padding: "0.5rem 1.2rem" }}>
             <LogIn size={16} /> Login
           </button>
         )}
@@ -174,7 +180,7 @@ export default function HomeInteraction() {
           <Trophy size={18} color="#E2B714" />
           <span style={{ color: "#E2B714", fontWeight: 600 }}>{t.fame_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push("/stats")}>
+        <button className="app-button" onClick={() => router.push(user ? "/profile" : "/stats")}>
           <BarChart2 size={18} color="var(--foreground-muted)" />
           <span>{t.stats_btn}</span>
         </button>

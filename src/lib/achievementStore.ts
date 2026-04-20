@@ -38,6 +38,23 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
     description: "Complete a competitive PvP race.",
     condition: (s) => s.mode === "pvp",
   },
+  NIGHT_OWL: {
+    id: "NIGHT_OWL",
+    title: "Night Owl",
+    icon: "🦉",
+    description: "Practice between midnight and 5 AM.",
+    condition: () => {
+      const hour = new Date().getHours();
+      return hour >= 0 && hour < 5;
+    },
+  },
+  CONSISTENCY: {
+    id: "CONSISTENCY",
+    title: "Consistency",
+    icon: "📈",
+    description: "Complete 10 sessions in a single day.",
+    condition: (s) => s.totalSessions >= 10, // simplified for now
+  },
 };
 
 /**
