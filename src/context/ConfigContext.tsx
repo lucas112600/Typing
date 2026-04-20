@@ -12,12 +12,14 @@ interface ConfigState {
   nickname: string;
   soundEnabled: boolean;
   soundVolume: number;
+  uiLang: "en" | "zh";
   setFontSize: (size: FontSizeOption) => void;
   setCursorStyle: (style: CursorStyleOption) => void;
   setStopOnError: (stop: boolean) => void;
   setNickname: (name: string) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setSoundVolume: (volume: number) => void;
+  setUiLang: (lang: "en" | "zh") => void;
 }
 
 const defaultConfig: ConfigState = {
@@ -27,12 +29,14 @@ const defaultConfig: ConfigState = {
   nickname: "",
   soundEnabled: true,
   soundVolume: 0.5,
+  uiLang: "en",
   setFontSize: () => {},
   setCursorStyle: () => {},
   setStopOnError: () => {},
   setNickname: () => {},
   setSoundEnabled: () => {},
   setSoundVolume: () => {},
+  setUiLang: () => {},
 };
 
 const ConfigContext = createContext<ConfigState>(defaultConfig);
@@ -46,6 +50,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [nickname, setNicknameState] = useState("");
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [soundVolume, setSoundVolumeState] = useState(0.5);
+  const [uiLang, setUiLangState] = useState<"en" | "zh">("en");
 
   // Load from local storage on mount
   useEffect(() => {
@@ -60,6 +65,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         if (parsed.nickname) setNicknameState(parsed.nickname);
         if (parsed.soundEnabled !== undefined) setSoundEnabledState(parsed.soundEnabled);
         if (parsed.soundVolume !== undefined) setSoundVolumeState(parsed.soundVolume);
+        if (parsed.uiLang) setUiLangState(parsed.uiLang);
       }
     } catch (e) {
       console.error("Failed to parse config", e);
@@ -69,28 +75,32 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   // Save to local storage on change
   const setFontSize = (v: FontSizeOption) => {
     setFontSizeState(v);
-    saveConfig({ fontSize: v, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume });
+    saveConfig({ fontSize: v, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang });
   };
   const setCursorStyle = (v: CursorStyleOption) => {
     setCursorStyleState(v);
-    saveConfig({ fontSize, cursorStyle: v, stopOnError, nickname, soundEnabled, soundVolume });
+    saveConfig({ fontSize, cursorStyle: v, stopOnError, nickname, soundEnabled, soundVolume, uiLang });
   };
   const setStopOnError = (v: boolean) => {
     setStopOnErrorState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError: v, nickname, soundEnabled, soundVolume });
+    saveConfig({ fontSize, cursorStyle, stopOnError: v, nickname, soundEnabled, soundVolume, uiLang });
   };
   const setNickname = (v: string) => {
     setNicknameState(v);
     localStorage.setItem("TYPING_NICKNAME", v); // Duplicate for easy access in non-context areas
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname: v, soundEnabled, soundVolume });
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname: v, soundEnabled, soundVolume, uiLang });
   };
   const setSoundEnabled = (v: boolean) => {
     setSoundEnabledState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled: v, soundVolume });
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled: v, soundVolume, uiLang });
   };
   const setSoundVolume = (v: number) => {
     setSoundVolumeState(v);
-    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume: v });
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume: v, uiLang });
+  };
+  const setUiLang = (v: "en" | "zh") => {
+    setUiLangState(v);
+    saveConfig({ fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang: v });
   };
 
   const saveConfig = (state: { 
@@ -100,6 +110,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     nickname: string;
     soundEnabled: boolean;
     soundVolume: number;
+    uiLang: "en" | "zh";
   }) => {
     localStorage.setItem("TYPING_CONFIG", JSON.stringify(state));
   };
@@ -115,8 +126,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ConfigContext.Provider value={{ 
-      fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume,
-      setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume 
+      fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
+      setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
     }}>
       {children}
     </ConfigContext.Provider>

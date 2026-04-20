@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Cursor from "@/components/Cursor";
 import SystemStatus from "@/components/SystemStatus";
+import Footer from "@/components/Footer";
 import { ConfigProvider } from "@/context/ConfigContext";
 
 export const metadata: Metadata = {
@@ -18,8 +19,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ConfigProvider>
-          <Cursor />
-          {children}
+          <div className="root-layout-wrapper">
+            <Cursor />
+            {children}
+            <Footer />
+          </div>
           <SystemStatus />
         </ConfigProvider>
       </body>

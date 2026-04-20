@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig } from "@/context/ConfigContext";
+import { translations } from "@/lib/i18n";
 import { appendStat } from "@/lib/statsStore";
 import audioManager from "@/lib/audioManager";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
@@ -10,7 +11,8 @@ import { ArrowLeft, BookOpen, Terminal, Quote, Feather } from "lucide-react";
 
 export default function PracticePage() {
   const router = useRouter();
-  const { fontSize, stopOnError, soundEnabled, soundVolume } = useConfig();
+  const { fontSize, stopOnError, soundEnabled, soundVolume, uiLang } = useConfig();
+  const t = translations[uiLang];
   
   const [gameState, setGameState] = useState<"SETUP" | "STARTING" | "RACING" | "FINISHED">("SETUP");
   const [countdown, setCountdown] = useState(3);
@@ -136,7 +138,10 @@ export default function PracticePage() {
     
     if (startTime) {
         const timeMs = Date.now() - startTime;
-        const durationMinutes = timeLimit > 0 ? (timeLimit / 60) : (timeMs / 60000);
+        
+        // Fix: Use actual elapsed time if user finished the text early, 
+        // even in timed mode, to avoid artificially low WPM.
+        const actualMinutes = timeMs / 60000;
         
         let correctChars = 0;
         for (let i = 0; i < finalValue.length; i++) {
@@ -147,7 +152,7 @@ export default function PracticePage() {
         const wpmDivisor = language === "zh" ? 1 : 5;
         
         // Safety: Minimum 1 second for calculation
-        const wpm = timeMs > 1000 ? Math.round((correctChars / wpmDivisor) / durationMinutes) : 0;
+        const wpm = timeMs > 1000 ? Math.round((correctChars / wpmDivisor) / actualMinutes) : 0;
         
         setFinalResult({ wpm, accuracy: Math.round(accuracy) });
 
@@ -159,7 +164,7 @@ export default function PracticePage() {
 
         if (soundEnabled) audioManager?.play("finish");
      }
-  }, [gameState, targetText, startTime, timeLimit, language, soundEnabled]);
+  }, [gameState, targetText, startTime, language, soundEnabled]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;
@@ -279,10 +284,10 @@ export default function PracticePage() {
     return (
       <div className="notion-page animate-fade-in" style={{ maxWidth: "800px" }}>
         <button onClick={() => router.push("/")} className="app-button" style={{ width: "fit-content", marginBottom: "2rem" }}>
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} /> {t.back}
         </button>
-        <h1 className="notion-title">Choose a Theme</h1>
-        <p className="notion-p" style={{ opacity: 0.6, marginBottom: "3rem" }}>Select a text pack to start your practice session.</p>
+        <h1 className="notion-title">{t.choose_theme}</h1>
+        <p className="notion-p" style={{ opacity: 0.6, marginBottom: "3rem" }}>{t.select_pack}</p>
         
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
           {THEME_PACKS.map((theme) => (
@@ -319,10 +324,10 @@ export default function PracticePage() {
              transition: "color 0.3s ease",
              fontFamily: "var(--font-mono)"
             }}>
-             {timeLeft}s
+             {timeLeft}{t.seconds}
            </div>
          )}
-          <span>ESC to quit</span>
+          <span>{t.esc_quit}</span>
       </div>
 
       <div style={{ position: "relative", minHeight: "200px" }}>
@@ -388,23 +393,23 @@ export default function PracticePage() {
           borderRadius: "16px",
           textAlign: "center"
         }}>
-          <h2 className="notion-h2" style={{ marginTop: 0, border: "none" }}>Race Finished!</h2>
+          <h2 className="notion-h2" style={{ marginTop: 0, border: "none" }}>{t.race_finished}</h2>
           <div style={{ display: "flex", justifyContent: "center", gap: "4rem", margin: "2rem 0" }}>
              <div>
-               <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>SPEED</div>
+               <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.speed}</div>
                <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{finalResult.wpm} <span style={{ fontSize: "1rem" }}>WPM</span></div>
              </div>
              <div>
-               <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>ACCURACY</div>
+               <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.accuracy}</div>
                <div style={{ fontSize: "2.5rem", fontWeight: 800 }}>{finalResult.accuracy}%</div>
              </div>
           </div>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
             <button className="app-button primary" style={{ width: "fit-content", padding: "0.6rem 2rem" }} onClick={() => setGameState("SETUP")}>
-              Try Another Theme
+              {t.try_another}
             </button>
             <button className="app-button" style={{ width: "fit-content", padding: "0.6rem 2rem", border: "1px solid var(--border)" }} onClick={() => router.push("/")}>
-              Return Home
+              {t.return_home}
             </button>
           </div>
         </div>

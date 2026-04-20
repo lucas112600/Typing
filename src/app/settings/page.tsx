@@ -3,17 +3,19 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
-
 import { useConfig, FontSizeOption, CursorStyleOption } from "@/context/ConfigContext";
+import { translations } from "@/lib/i18n";
 import { ArrowLeft, Check } from "lucide-react";
 
 export default function SettingsPage() {
   const router = useRouter();
   
   const { 
-    fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume,
-    setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume 
+    fontSize, cursorStyle, stopOnError, nickname, soundEnabled, soundVolume, uiLang,
+    setFontSize, setCursorStyle, setStopOnError, setNickname, setSoundEnabled, setSoundVolume, setUiLang 
   } = useConfig();
+
+  const t = translations[uiLang];
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_CONFIG");
@@ -23,22 +25,42 @@ export default function SettingsPage() {
     <div className="notion-page animate-fade-in">
       
       <button className="app-button" onClick={() => router.push("/")} style={{ width: "fit-content", marginBottom: "2rem", color: "var(--foreground-muted)" }}>
-         <ArrowLeft size={16} /> Back to Hub
+         <ArrowLeft size={16} /> {t.back_to_hub}
       </button>
 
       <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⚙️</div>
-      <h1 className="notion-title">Preferences</h1>
+      <h1 className="notion-title">{t.settings_pref}</h1>
       <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
-        Configure typographical scale and strictness algorithms.
+        {t.settings_pref_desc}
       </p>
 
+      {/* Language Switcher */}
+      <h2 className="notion-h2">{t.ui_language}</h2>
+      <p className="notion-p">Choose your preferred display language for the interface.</p>
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+         <button 
+            className={`app-button ${uiLang === "en" ? "primary" : ""}`} 
+            style={{ width: "auto", padding: "0.5rem 1.5rem", border: "1px solid var(--border)" }}
+            onClick={() => setUiLang("en")}
+         >
+            English
+         </button>
+         <button 
+            className={`app-button ${uiLang === "zh" ? "primary" : ""}`} 
+            style={{ width: "auto", padding: "0.5rem 1.5rem", border: "1px solid var(--border)" }}
+            onClick={() => setUiLang("zh")}
+         >
+            中文
+         </button>
+      </div>
+
       {/* Profile / Nickname Block */}
-      <h2 className="notion-h2">Identity</h2>
-      <p className="notion-p">Set your nickname for global leaderboards and PvP rooms.</p>
+      <h2 className="notion-h2">{t.identity}</h2>
+      <p className="notion-p">{t.identity_desc}</p>
       <div style={{ marginBottom: "2rem" }}>
          <input 
             type="text"
-            placeholder="nEnter your nickname..."
+            placeholder={t.nick_placeholder}
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             className="app-input"
@@ -57,8 +79,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Editor Font Size Block */}
-      <h2 className="notion-h2">Typography Scale</h2>
-      <p className="notion-p">Choose the visual block size of character elements during practice.</p>
+      <h2 className="notion-h2">{t.typo_scale}</h2>
+      <p className="notion-p">{t.typo_scale_desc}</p>
       <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", overflow: "hidden", marginBottom: "1rem" }}>
          {["MEDIUM", "LARGE", "EXTRA_LARGE"].map((size, idx) => (
             <button 
@@ -79,8 +101,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Cursor Block */}
-      <h2 className="notion-h2">Cursor Style</h2>
-      <p className="notion-p">Affects the practice line indicator.</p>
+      <h2 className="notion-h2">{t.cursor_style}</h2>
+      <p className="notion-p">{t.cursor_desc}</p>
       <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius)", overflow: "hidden", marginBottom: "1rem" }}>
          {["CROSSHAIR", "BLOCK", "LINE"].map((style, idx) => (
             <button 
@@ -101,8 +123,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Strict Mode Block */}
-      <h2 className="notion-h2">Strict Constraint</h2>
-      <p className="notion-p">Requires 100% path accuracy before advancing (locks input on typo).</p>
+      <h2 className="notion-h2">{t.strict_constraint}</h2>
+      <p className="notion-p">{t.strict_desc}</p>
       
       <button 
          className="app-button"
@@ -114,7 +136,7 @@ export default function SettingsPage() {
          }}
          onClick={() => setStopOnError(!stopOnError)}
       >
-         <span>{stopOnError ? "Strict Mode is ON" : "Strict Mode is OFF"}</span>
+         <span>{stopOnError ? t.strict_on : t.strict_off}</span>
          <div style={{ 
             width: "36px", height: "20px", 
             backgroundColor: stopOnError ? "#2383E2" : "var(--border)", 
@@ -136,8 +158,8 @@ export default function SettingsPage() {
       </button>
 
       {/* Audio / Sound Block */}
-      <h2 className="notion-h2">Audio Feedback</h2>
-      <p className="notion-p">Enable high-fidelity mechanical keyboard sound simulation.</p>
+      <h2 className="notion-h2">{t.audio_feedback}</h2>
+      <p className="notion-p">{t.audio_desc}</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "4rem" }}>
          <button 
@@ -149,7 +171,7 @@ export default function SettingsPage() {
             }}
             onClick={() => setSoundEnabled(!soundEnabled)}
          >
-            <span>{soundEnabled ? "Sound Effects ON" : "Sound Effects OFF"}</span>
+            <span>{soundEnabled ? t.sound_on : t.sound_off}</span>
             <div style={{ 
                width: "36px", height: "20px", 
                backgroundColor: soundEnabled ? "#E2B714" : "var(--border)", 
@@ -157,23 +179,23 @@ export default function SettingsPage() {
                position: "relative",
                transition: "background-color 0.2s"
             }}>
-                <div style={{
-                   position: "absolute",
-                   top: "2px",
-                   left: soundEnabled ? "18px" : "2px",
-                   width: "16px",
-                   height: "16px",
-                   backgroundColor: "#fff",
-                   borderRadius: "50%",
-                   transition: "left 0.2s"
-                }} />
+                 <div style={{
+                    position: "absolute",
+                    top: "2px",
+                    left: soundEnabled ? "18px" : "2px",
+                    width: "16px",
+                    height: "16px",
+                    backgroundColor: "#fff",
+                    borderRadius: "50%",
+                    transition: "left 0.2s"
+                 }} />
             </div>
          </button>
 
          {soundEnabled && (
            <div style={{ padding: "1rem", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-               <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>VOLUME</span>
+               <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.volume}</span>
                <span style={{ fontSize: "0.8rem" }}>{Math.round(soundVolume * 100)}%</span>
              </div>
              <input 

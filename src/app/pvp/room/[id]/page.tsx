@@ -8,6 +8,7 @@ import { ArrowLeft, Settings, Check, AlertCircle } from "lucide-react";
 import audioManager from "@/lib/audioManager";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
+import { translations } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,8 @@ interface PresenceMetadata {
 export default function PvPRoom({ params }: { params: Promise<{ id: string }> }) {
   const { id: roomId } = use(params);
   const router = useRouter();
-  const { fontSize, stopOnError, soundEnabled, soundVolume, nickname } = useConfig();
+  const { fontSize, stopOnError, soundEnabled, soundVolume, nickname, uiLang } = useConfig();
+  const t = translations[uiLang];
   
   const [userId] = useState(() => Math.random().toString(36).substring(2, 9));
   const [players, setPlayers] = useState<Player[]>([]);
@@ -466,7 +468,7 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
                className={`app-button ${players.find(p => p.id === userId)?.ready ? "secondary" : "primary"}`}
                style={{ padding: "0.5rem 1.5rem" }}
              >
-               {players.find(p => p.id === userId)?.ready ? "Unready" : "Ready Up"}
+               {players.find(p => p.id === userId)?.ready ? t.unready : t.readyUp}
              </button>
            )}
            <button 
@@ -474,14 +476,14 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
              style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--foreground-muted)", fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}
            >
              <ArrowLeft size={16} />
-             <span>Exit</span>
+             <span>{t.back}</span>
            </button>
         </div>
       </div>
 
       {showSettings && isHost && (
         <div className="animate-fade-in" style={{ marginBottom: "2rem", padding: "1.5rem", background: "var(--bg-secondary)", borderRadius: "12px", border: "1px solid var(--border)" }}>
-           <h4 className="notion-h3" style={{ marginTop: 0 }}>Room Theme</h4>
+           <h4 className="notion-h3" style={{ marginTop: 0 }}>{t.roomTheme}</h4>
            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem", marginTop: "1rem" }}>
               {THEME_PACKS.map(theme => (
                 <button 

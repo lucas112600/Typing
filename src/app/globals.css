@@ -167,11 +167,18 @@ body {
 }
 
 /* Page Layout Wrappers */
-.notion-page {
-  max-width: 900px;
+.root-layout-wrapper {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 0 2rem;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.notion-page {
+  flex: 1; /* Ensure children can grow and push footer down */
+  padding: 4rem 0;
   display: flex;
   flex-direction: column;
 }

@@ -49,11 +49,11 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
   
   const textRaw = sourceRaw.text;
 
-  let targetLength = typeof diff === "number" ? diff : (diff === "NORMAL" ? 100 : (diff === "HARD" ? 200 : (diff === "TIMED" ? 600 : 50)));
+  let targetLength = typeof diff === "number" ? diff : (diff === "NORMAL" ? 100 : (diff === "HARD" ? 200 : (diff === "TIMED" ? 180 : 50)));
   
   if (language === "zh") {
      if (typeof diff === "number") targetLength = diff;
-     else targetLength = diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : (diff === "TIMED" ? 800 : 250);
+     else targetLength = diff === "EASY" ? 60 : diff === "NORMAL" ? 120 : (diff === "TIMED" ? 200 : 250);
   }
   
   // Try to find a real semantic chunk from the raw text matching approximate length
