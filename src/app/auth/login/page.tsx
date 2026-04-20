@@ -163,7 +163,7 @@ export default function LoginPage() {
       </button>
 
       <div style={{ marginTop: "2rem", textAlign: "center", fontSize: "0.9rem", color: "var(--foreground-muted)" }}>
-        Don't have an account? <Link href="/auth/register" style={{ color: "#2383E2", fontWeight: 600 }}>Sign up</Link>
+        Don&apos;t have an account? <Link href="/auth/register" style={{ color: "#2383E2", fontWeight: 600 }}>Sign up</Link>
       </div>
     </div>
   );

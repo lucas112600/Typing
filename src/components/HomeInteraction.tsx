@@ -214,54 +214,103 @@ export default function HomeInteraction() {
         </div>
       </div>
 
-      {/* Daily Challenge Block */}
-      <div style={{ 
-        marginTop: "2rem",
-        padding: "1.5rem", 
-        background: "rgba(35, 131, 226, 0.04)", 
-        border: "1px solid rgba(35, 131, 226, 0.2)", 
-        borderRadius: "var(--radius)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem"
-      }}>
-         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-               <Calendar size={20} color="#2383E2" />
-               <h2 className="notion-h2" style={{ margin: 0, border: "none", fontSize: "1.2rem" }}>{t.daily_challenge}</h2>
-               <span style={{ 
-                 fontSize: "0.6rem", 
-                 background: "#2383E2", 
-                 color: "#fff", 
-                 padding: "1px 6px", 
-                 borderRadius: "10px",
-                 fontWeight: 800
-               }}>{t.daily_badge}</span>
-            </div>
-            <button className="app-button" onClick={() => router.push("/leaderboard")} style={{ width: "auto", fontSize: "0.8rem", color: "var(--foreground-muted)" }}>
-               {t.daily_ranking}
-            </button>
-         </div>
-         <p className="notion-p" style={{ fontSize: "0.95rem", opacity: 0.8, margin: 0 }}>{t.daily_challenge_desc}</p>
-         <button 
-            className="app-button primary"
-            onClick={handleStartDaily}
-            disabled={generating}
-            style={{ width: "100%", padding: "0.75rem", justifyContent: "center" }}
-          >
-            {generating ? t.generating : <><Zap size={16} /> {t.take_challenge}</>}
-         </button>
-      </div>
+      {/* Premium Daily Global Challenge Banner */}
+      <div 
+        onClick={handleStartDaily}
+        style={{
+          width: "100%",
+          padding: "3rem",
+          borderRadius: "24px",
+          position: "relative",
+          overflow: "hidden",
+          cursor: "pointer",
+          marginTop: "3rem",
+          marginBottom: "3rem",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+        }}
+        className="app-card"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.01) translateY(-5px)";
+          e.currentTarget.style.boxShadow = "0 35px 80px rgba(0,0,0,0.3)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1) translateY(0)";
+          e.currentTarget.style.boxShadow = "0 25px 60px rgba(0,0,0,0.2)";
+        }}
+      >
+        {/* Visual Background */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: "url('/daily_challenge_banner.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "brightness(0.5) saturate(1.1)",
+          zIndex: 0
+        }} />
+        
+        {/* Glassmorphic/Gradient Overlay */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "linear-gradient(135deg, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.4) 60%, transparent 100%)",
+          zIndex: 1
+        }} />
 
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
-         <button 
-            className="app-button primary"
-            onClick={() => handleStart()}
-            disabled={generating}
-            style={{ width: "auto", padding: "0.5rem 1.2rem", height: "40px" }}
-          >
-            {generating ? t.generating : <><Zap size={16} /> {t.auto_start} <ChevronRight size={16} /></>}
-         </button>
+        {/* Content */}
+        <div style={{ position: "relative", zIndex: 10, maxWidth: "600px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "1.2rem" }}>
+            <div style={{ padding: "0.5rem", background: "rgba(35, 131, 226, 0.2)", borderRadius: "12px", border: "1px solid rgba(35, 131, 226, 0.3)" }}>
+              <Calendar size={20} color="#2383E2" />
+            </div>
+            <div style={{ 
+              background: "#2383E2", 
+              color: "white", 
+              fontSize: "0.7rem", 
+              fontWeight: 900, 
+              padding: "0.2rem 0.8rem", 
+              borderRadius: "50px",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em"
+            }}>
+              Limited Daily Event
+            </div>
+          </div>
+          
+          <h2 style={{ fontSize: "2.8rem", fontWeight: 900, color: "white", margin: "0 0 1rem 0", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+            Daily Global <br/> <span style={{ color: "#2383E2" }}>Challenge</span>
+          </h2>
+          
+          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "1.2rem", lineHeight: 1.6, marginBottom: "2.5rem" }}>
+            Compete worldwide with today&apos;s unique passage. Level up your profile and earn exclusive daily badges.
+          </p>
+
+          <div style={{ display: "flex", gap: "1.2rem", alignItems: "center", flexWrap: "wrap" }}>
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleStartDaily(); }}
+              disabled={generating}
+              className="app-button primary" 
+              style={{ width: "auto", padding: "1.2rem 2.5rem", fontSize: "1.1rem", fontWeight: 800, boxShadow: "0 15px 30px rgba(35, 131, 226, 0.5)" }}
+            >
+              {generating ? "Generating..." : <><Zap size={20} /> START CHALLENGE</>}
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); router.push("/leaderboard"); }}
+              className="app-button" 
+              style={{ width: "auto", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "white", padding: "1.2rem 1.8rem" }}
+            >
+              <Trophy size={18} style={{ marginRight: "0.5rem" }} /> {t.daily_ranking || "Ranking"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Difficulty Targeting */}
