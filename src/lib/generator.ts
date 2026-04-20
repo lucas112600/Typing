@@ -42,6 +42,19 @@ const REAL_TEXTS = {
   ]
 };
 
+export function getDailyChallenge(language: "en" | "zh"): Entry {
+  const dateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const seed = dateStr.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  const corpus = REAL_TEXTS[language];
+  const index = seed % corpus.length;
+  const sourceRaw = corpus[index];
+  
+  const diff: Difficulty = language === "en" ? "NORMAL" : "HARD"; // Standardize difficulty for daily
+  
+  return generateText(language, diff, `Daily - ${sourceRaw.title}`);
+}
+
 export function generateText(language: "en" | "zh", diff: Difficulty, overrideTitle?: string): Entry {
   // Get the target corpus
   const corpus = REAL_TEXTS[language];

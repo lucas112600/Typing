@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
+import { supabase } from "@/lib/supabase";
 import { appendStat } from "@/lib/statsStore";
 import audioManager from "@/lib/audioManager";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
@@ -11,8 +12,10 @@ import { ArrowLeft, BookOpen, Terminal, Quote, Feather } from "lucide-react";
 
 export default function PracticePage() {
   const router = useRouter();
-  const { fontSize, stopOnError, soundEnabled, soundVolume, uiLang } = useConfig();
+  const { fontSize, stopOnError, soundEnabled, soundVolume, nickname, uiLang } = useConfig();
   const t = translations[uiLang];
+  
+  const [mode, setMode] = useState<"practice" | "daily">("practice");
   
   const [gameState, setGameState] = useState<"SETUP" | "STARTING" | "RACING" | "FINISHED">("SETUP");
   const [countdown, setCountdown] = useState(3);
@@ -52,6 +55,9 @@ export default function PracticePage() {
           if (data.timeLimit) {
             setTimeLimit(data.timeLimit);
             setTimeLeft(data.timeLimit);
+          }
+          if (data.mode) {
+            setMode(data.mode);
           }
           if (data.text) {
             setGameState("STARTING");
@@ -163,6 +169,24 @@ export default function PracticePage() {
         });
 
         if (soundEnabled) audioManager?.play("finish");
+
+        // Submit to Daily Leaderboard if in daily mode
+        if (mode === "daily") {
+          const submitDaily = async () => {
+            try {
+              // We use a prefix [DAILY] to identify these in the shared table if no category col exists
+              // If the user adds a 'category' column, this can be updated.
+              await supabase.from("leaderboards").insert({
+                name: `[DAILY] ${nickname || "Anonymous"}`,
+                wpm: wpm,
+                accuracy: Math.round(accuracy)
+              });
+            } catch (err) {
+              console.error("Daily submission failed", err);
+            }
+          };
+          submitDaily();
+        }
      }
   }, [gameState, targetText, startTime, language, soundEnabled]);
 

@@ -25,6 +25,14 @@ export const translations = {
     version_log_title: "Version Log",
     update_list: "Update History",
     contact_us: "Contact Us",
+    
+    // Daily Challenge
+    daily_challenge: "Challenge of the Day",
+    daily_challenge_desc: "Tackle a unique article selected for today and compete with others.",
+    daily_ranking: "Daily Ranking",
+    challenge_reset_msg: "Next challenge in",
+    take_challenge: "Accept Challenge",
+    daily_badge: "DAILY",
     quick_start: "Quick Start",
     quick_start_desc: "Instantly jump into a randomly generated practice session.",
     target_lang: "Target Language:",
@@ -104,6 +112,14 @@ export const translations = {
     version_log_title: "版本日誌",
     update_list: "更新歷史",
     contact_us: "聯繫我們",
+
+    // Daily Challenge
+    daily_challenge: "每日全球挑戰",
+    daily_challenge_desc: "挑戰今日限定的文章，與全球玩家一較高下。",
+    daily_ranking: "今日排行",
+    challenge_reset_msg: "下次挑戰於",
+    take_challenge: "接受挑戰",
+    daily_badge: "今日限定",
     quick_start: "快速開始",
     quick_start_desc: "立即進入隨機生成的練習環節。",
     target_lang: "練習語言：",

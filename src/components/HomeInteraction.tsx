@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { SystemLogPubSub } from "@/lib/systemLog";
 import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
-import { generateText, Difficulty } from "@/lib/generator";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy } from "lucide-react";
+import { generateText, getDailyChallenge, Difficulty } from "@/lib/generator";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar } from "lucide-react";
 
 export default function HomeInteraction() {
   const router = useRouter();
@@ -27,34 +27,42 @@ export default function HomeInteraction() {
     setUiLang(newLang);
   };
 
-  const handleStart = (difficulty?: Difficulty, timeLimit?: number) => {
+  const handleStart = (difficulty?: Difficulty, timeLimit?: number, isDaily: boolean = false) => {
     if (generating) return;
     setGenerating(true);
     SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
 
     setTimeout(() => {
-      let finalDiff: Difficulty = difficulty || "EASY";
+      let practiceData;
       
-      // Timer Scaling Logic
-      if (difficulty === "TIMED" && timeLimit) {
-        // Factor of 3 units per second (180 units/min)
-        finalDiff = timeLimit * 3;
-      } else if (!difficulty) {
-         const diffLevels: ("EASY" | "NORMAL" | "HARD")[] = ["EASY", "NORMAL", "HARD"];
-         finalDiff = diffLevels[Math.floor(Math.random() * diffLevels.length)];
+      if (isDaily) {
+        practiceData = getDailyChallenge(lang);
+      } else {
+        let finalDiff: Difficulty = difficulty || "EASY";
+        
+        // Timer Scaling Logic
+        if (difficulty === "TIMED" && timeLimit) {
+          finalDiff = timeLimit * 3;
+        } else if (!difficulty) {
+           const diffLevels: ("EASY" | "NORMAL" | "HARD")[] = ["EASY", "NORMAL", "HARD"];
+           finalDiff = diffLevels[Math.floor(Math.random() * diffLevels.length)];
+        }
+        
+        practiceData = generateText(lang, finalDiff);
       }
-      
-      const practiceData = generateText(lang, finalDiff);
       
       sessionStorage.setItem("typing_practice_data", JSON.stringify({
         ...practiceData,
         language: lang,
-        timeLimit: timeLimit || 0
+        timeLimit: timeLimit || 0,
+        mode: isDaily ? "daily" : "practice"
       }));
       SystemLogPubSub.publish("INITIATE_PRACTICE");
       router.push("/practice");
     }, 400);
   };
+
+  const handleStartDaily = () => handleStart(undefined, undefined, true);
 
   return (
     <div className="notion-page animate-fade-in">
@@ -117,6 +125,45 @@ export default function HomeInteraction() {
             English
           </button>
         </div>
+      </div>
+
+      {/* Daily Challenge Block */}
+      <div style={{ 
+        marginTop: "2rem",
+        padding: "1.5rem", 
+        background: "rgba(35, 131, 226, 0.04)", 
+        border: "1px solid rgba(35, 131, 226, 0.2)", 
+        borderRadius: "var(--radius)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem"
+      }}>
+         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+               <Calendar size={20} color="#2383E2" />
+               <h2 className="notion-h2" style={{ margin: 0, border: "none", fontSize: "1.2rem" }}>{t.daily_challenge}</h2>
+               <span style={{ 
+                 fontSize: "0.6rem", 
+                 background: "#2383E2", 
+                 color: "#fff", 
+                 padding: "1px 6px", 
+                 borderRadius: "10px",
+                 fontWeight: 800
+               }}>{t.daily_badge}</span>
+            </div>
+            <button className="app-button" onClick={() => router.push("/leaderboard")} style={{ width: "auto", fontSize: "0.8rem", color: "var(--foreground-muted)" }}>
+               {t.daily_ranking}
+            </button>
+         </div>
+         <p className="notion-p" style={{ fontSize: "0.95rem", opacity: 0.8, margin: 0 }}>{t.daily_challenge_desc}</p>
+         <button 
+            className="app-button primary"
+            onClick={handleStartDaily}
+            disabled={generating}
+            style={{ width: "100%", padding: "0.75rem", justifyContent: "center" }}
+          >
+            {generating ? t.generating : <><Zap size={16} /> {t.take_challenge}</>}
+         </button>
       </div>
 
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
