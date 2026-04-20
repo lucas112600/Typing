@@ -40,10 +40,16 @@ export default function LoginPage() {
   const handleDiscordLogin = async () => {
     setOauthLoading(true);
     setError(null);
+    
+    // Auto-detect production vs local origin
+    const origin = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? window.location.origin 
+      : 'https://typing.huchialun971126.workers.dev';
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "discord",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${origin}/auth/callback`,
       },
     });
     if (error) {
