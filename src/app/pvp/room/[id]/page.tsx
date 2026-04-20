@@ -10,6 +10,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
 import { translations } from "@/lib/i18n";
 import { useAuth } from "@/context/AuthContext";
+import { awardAchievement } from "@/lib/achievementStore";
 import VirtualKeyboard from "@/components/VirtualKeyboard";
 
 export const dynamic = "force-dynamic";
@@ -354,6 +355,10 @@ export default function PvPRoom({ params }: { params: Promise<{ id: string }> })
         accuracy: finalAccuracy,
         user_id: user?.id
       });
+
+      if (user) {
+        awardAchievement(user.id, "PVP_WARRIOR");
+      }
     }
   };
 

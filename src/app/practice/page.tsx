@@ -6,7 +6,8 @@ import { useConfig } from "@/context/ConfigContext";
 import { useAuth } from "@/context/AuthContext";
 import { translations } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
-import { appendStat } from "@/lib/statsStore";
+import { appendStat, getStats } from "@/lib/statsStore";
+import { awardAchievement, ACHIEVEMENTS } from "@/lib/achievementStore";
 import audioManager from "@/lib/audioManager";
 import { THEME_PACKS, ThemeText } from "@/lib/themes";
 import { ArrowLeft, BookOpen, Terminal, Quote, Feather } from "lucide-react";
@@ -190,6 +191,26 @@ export default function PracticePage() {
             }
           };
           submitDaily();
+        }
+
+        // --- Achievements Check ---
+        if (user) {
+          const totalSessions = getStats().length + 1; // +1 for the current one
+          
+          // Check Speed Demon
+          if (ACHIEVEMENTS.SPEED_DEMON.condition({ wpm, accuracy: finalizedAccuracy, totalSessions })) {
+            awardAchievement(user.id, "SPEED_DEMON");
+          }
+          
+          // Check Accuracy King
+          if (ACHIEVEMENTS.ACCURACY_KING.condition({ wpm, accuracy: finalizedAccuracy, totalSessions })) {
+            awardAchievement(user.id, "ACCURACY_KING");
+          }
+          
+          // Check First Blood
+          if (totalSessions === 1) {
+            awardAchievement(user.id, "FIRST_SESSION");
+          }
         }
      }
   }, [gameState, targetText, startTime, language, soundEnabled]);

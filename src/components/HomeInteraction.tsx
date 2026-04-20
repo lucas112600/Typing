@@ -7,7 +7,8 @@ import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
 import { generateText, getDailyChallenge, Difficulty } from "@/lib/generator";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon } from "lucide-react";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon, Award } from "lucide-react";
+import { fetchUserAchievements, ACHIEVEMENTS } from "@/lib/achievementStore";
 
 export default function HomeInteraction() {
   const router = useRouter();
@@ -18,10 +19,19 @@ export default function HomeInteraction() {
   const [lang, setLang] = useState<"en" | "zh">("en");
   const [generating, setGenerating] = useState(false);
   const [customWordCount, setCustomWordCount] = useState(300);
+  const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
 
   useEffect(() => {
     SystemLogPubSub.publish("SYS_READY");
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserAchievements(user.id).then(setUnlockedBadges);
+    } else {
+      setUnlockedBadges([]);
+    }
+  }, [user]);
 
   // Sync UI language with target language for "Adaptive" feel
   const handleLangChange = (newLang: "en" | "zh") => {
@@ -95,8 +105,28 @@ export default function HomeInteraction() {
           </div>
           <div>
             <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)", fontWeight: 600 }}>IDENTITY</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>
-              {user ? (profile?.nickname || user.email) : "Guest Explorer"}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>
+                {user ? (profile?.nickname || user.email) : "Guest Explorer"}
+              </div>
+              
+              {/* Badges Display */}
+              <div style={{ display: "flex", gap: "0.2rem" }}>
+                {unlockedBadges.map(id => (
+                  <span 
+                    key={id} 
+                    title={ACHIEVEMENTS[id]?.title} 
+                    style={{ 
+                      fontSize: "1rem", 
+                      cursor: "help",
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
+                      transform: "translateY(-1px)"
+                    }}
+                  >
+                    {ACHIEVEMENTS[id]?.icon}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

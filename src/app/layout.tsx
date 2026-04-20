@@ -4,6 +4,7 @@ import SystemStatus from "@/components/SystemStatus";
 import Footer from "@/components/Footer";
 import { ConfigProvider } from "@/context/ConfigContext";
 import { AuthProvider } from "@/context/AuthContext";
+import AchievementToast from "@/components/AchievementToast";
 
 export const metadata: Metadata = {
   title: "Typing",
@@ -25,6 +26,7 @@ export default function RootLayout({
               <Footer />
             </div>
             <SystemStatus />
+            <AchievementToast />
           </ConfigProvider>
         </AuthProvider>
       </body>
