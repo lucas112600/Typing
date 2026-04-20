@@ -213,7 +213,7 @@ export default function PracticePage() {
           }
         }
      }
-  }, [gameState, targetText, startTime, language, soundEnabled]);
+  }, [gameState, targetText, startTime, language, soundEnabled, mode, nickname, profile, user]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;

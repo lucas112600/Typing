@@ -7,7 +7,7 @@ import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
 import { generateText, getDailyChallenge, Difficulty } from "@/lib/generator";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon, Award } from "lucide-react";
+import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon } from "lucide-react";
 import { fetchUserAchievements, ACHIEVEMENTS } from "@/lib/achievementStore";
 
 export default function HomeInteraction() {
@@ -26,11 +26,17 @@ export default function HomeInteraction() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetchUserAchievements(user.id).then(setUnlockedBadges);
-    } else {
-      setUnlockedBadges([]);
-    }
+    let active = true;
+    const load = async () => {
+      if (user) {
+        const data = await fetchUserAchievements(user.id);
+        if (active) setUnlockedBadges(data);
+      } else {
+        if (active) setUnlockedBadges([]);
+      }
+    };
+    load();
+    return () => { active = false; };
   }, [user]);
 
   // Sync UI language with target language for "Adaptive" feel
