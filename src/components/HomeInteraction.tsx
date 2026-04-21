@@ -7,37 +7,22 @@ import { useConfig } from "@/context/ConfigContext";
 import { translations } from "@/lib/i18n";
 import { generateText, getDailyChallenge, Difficulty } from "@/lib/generator";
 import { useAuth } from "@/context/AuthContext";
-import { Zap, BookOpen, Settings, BarChart2, ChevronRight, FileText, Users, Trophy, Calendar, LogIn, LogOut, User as UserIcon } from "lucide-react";
-import { fetchUserAchievements, ACHIEVEMENTS } from "@/lib/achievementStore";
+import { Activity, BookOpen, Settings, BarChart2, FileText, Users, Trophy, Play } from "lucide-react";
+import { fetchUserAchievements } from "@/lib/achievementStore";
+import TechLogos from "./TechLogos";
 
 export default function HomeInteraction() {
   const router = useRouter();
-  const { user, profile, signOut } = useAuth();
+  const { user } = useAuth();
   const { uiLang, setUiLang } = useConfig();
   const t = translations[uiLang];
   
   const [lang, setLang] = useState<"en" | "zh">("en");
   const [generating, setGenerating] = useState(false);
   const [customWordCount, setCustomWordCount] = useState(300);
-  const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
-
   useEffect(() => {
     SystemLogPubSub.publish("SYS_READY");
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      if (user) {
-        const data = await fetchUserAchievements(user.id);
-        if (active) setUnlockedBadges(data);
-      } else {
-        if (active) setUnlockedBadges([]);
-      }
-    };
-    load();
-    return () => { active = false; };
-  }, [user]);
 
   // Sync UI language with target language for "Adaptive" feel
   const handleLangChange = (newLang: "en" | "zh") => {
@@ -48,7 +33,7 @@ export default function HomeInteraction() {
   const handleStart = (difficulty?: Difficulty, timeLimit?: number, isDaily: boolean = false) => {
     if (generating) return;
     setGenerating(true);
-    SystemLogPubSub.publish("GENERATING_NEURAL_TEXT...");
+    SystemLogPubSub.publish("SYS_SYNCING_SESSION...");
 
     setTimeout(() => {
       let practiceData;
@@ -85,116 +70,51 @@ export default function HomeInteraction() {
   return (
     <div className="notion-page animate-fade-in">
       
-      {/* Auth Status / Identity Header */}
-      <div 
-        onClick={() => router.push(user ? "/profile" : "/auth/login")}
-        style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center", 
-          marginBottom: "3rem",
-          padding: "1rem",
-          background: "var(--surface-hover)",
-          borderRadius: "var(--radius)",
-          border: "1px solid var(--border)",
-          cursor: "pointer",
-          transition: "all 0.2s ease"
-        }}
-        className="app-card"
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-          <div style={{ 
-            width: "40px", 
-            height: "40px", 
-            borderRadius: "50%", 
-            background: "var(--surface-active)", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            color: "#2383E2"
-          }}>
-            <UserIcon size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: "0.8rem", color: "var(--foreground-muted)", fontWeight: 600 }}>IDENTITY</div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>
-                {user ? (profile?.nickname || user.email) : "Guest Explorer"}
-              </div>
-              
-              {/* Badges Display */}
-              <div style={{ display: "flex", gap: "0.2rem" }}>
-                {unlockedBadges.map(id => (
-                  <span 
-                    key={id} 
-                    title={ACHIEVEMENTS[id]?.title} 
-                    style={{ 
-                      fontSize: "1rem", 
-                      cursor: "help",
-                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
-                      transform: "translateY(-1px)"
-                    }}
-                  >
-                    {ACHIEVEMENTS[id]?.icon}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {user ? (
-          <div style={{ color: "var(--foreground-muted)", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            View Dashboard <ChevronRight size={14} />
-          </div>
-        ) : (
-          <button onClick={(e) => { e.stopPropagation(); router.push("/auth/login"); }} className="app-button primary" style={{ width: "auto", padding: "0.5rem 1.2rem" }}>
-            <LogIn size={16} /> Login
-          </button>
-        )}
+      {/* Title & Description with Silky Reveal */}
+      <div className="reveal">
+        <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⌨️</div>
+        <h1 className="notion-title">{t.hub_title}</h1>
+        <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
+          {t.hub_desc}
+        </p>
       </div>
 
-      {/* Cover Icon / Title */}
-      <div style={{ fontSize: "5rem", marginBottom: "1rem", lineHeight: 1 }}>⌨️</div>
-      <h1 className="notion-title">{t.hub_title}</h1>
-      <p className="notion-p" style={{ fontSize: "1.1rem", color: "var(--foreground-muted)" }}>
-        {t.hub_desc}
-      </p>
+      <TechLogos />
 
       {/* Pages Navigation */}
-      <h2 className="notion-h2">{t.pages_title}</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
-        <button className="app-button" onClick={() => router.push("/docs")}>
+      <h2 className="notion-h2 reveal reveal-delay-2">{t.pages_title}</h2>
+      <div className="stagger reveal-delay-2" style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
+        <button className="app-button stagger-item stagger-delay-1" onClick={() => router.push("/docs")}>
           <FileText size={18} color="var(--foreground-muted)" />
           <span>{t.doc_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push("/explore")}>
+        <button className="app-button stagger-item stagger-delay-2" onClick={() => router.push("/explore")}>
           <BookOpen size={18} color="var(--foreground-muted)" />
           <span>{t.explore_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push("/pvp")} style={{ border: "1px solid #2383E2", background: "rgba(35, 131, 226, 0.05)" }}>
+        <button className="app-button stagger-item stagger-delay-3" onClick={() => router.push("/pvp")} style={{ border: "1px solid #2383E2", background: "rgba(35, 131, 226, 0.05)" }}>
           <Users size={18} color="#2383E2" />
           <span style={{ color: "#2383E2", fontWeight: 600 }}>{t.pvp_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push("/leaderboard")} style={{ border: "1px solid #E2B714", background: "rgba(226, 183, 20, 0.05)" }}>
+        <button className="app-button stagger-item stagger-delay-4" onClick={() => router.push("/leaderboard")} style={{ border: "1px solid #E2B714", background: "rgba(226, 183, 20, 0.05)" }}>
           <Trophy size={18} color="#E2B714" />
           <span style={{ color: "#E2B714", fontWeight: 600 }}>{t.fame_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push(user ? "/profile" : "/stats")}>
+        <button className="app-button stagger-item stagger-delay-5" onClick={() => router.push(user ? "/profile" : "/stats")}>
           <BarChart2 size={18} color="var(--foreground-muted)" />
           <span>{t.stats_btn}</span>
         </button>
-        <button className="app-button" onClick={() => router.push("/settings")}>
+        <button className="app-button stagger-item stagger-delay-6" onClick={() => router.push("/settings")}>
           <Settings size={18} color="var(--foreground-muted)" />
           <span>{t.settings_btn}</span>
         </button>
       </div>
 
       {/* Quick Play Block */}
-      <h2 className="notion-h2">{t.quick_start}</h2>
-      <p className="notion-p">{t.quick_start_desc}</p>
+      <h2 className="notion-h2 reveal reveal-delay-3">{t.quick_start}</h2>
+      <p className="notion-p reveal reveal-delay-3">{t.quick_start_desc}</p>
       
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+      <div className="reveal reveal-delay-3" style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
         <span style={{ fontSize: "0.9rem", color: "var(--foreground-muted)" }}>{t.target_lang}</span>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button 
@@ -217,6 +137,7 @@ export default function HomeInteraction() {
       {/* Premium Daily Global Challenge Banner */}
       <div 
         onClick={handleStartDaily}
+        className="app-card reveal reveal-delay-4"
         style={{
           width: "100%",
           padding: "3rem",
@@ -226,11 +147,9 @@ export default function HomeInteraction() {
           cursor: "pointer",
           marginTop: "3rem",
           marginBottom: "3rem",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid var(--border)",
           transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
-        className="app-card"
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.01) translateY(-5px)";
           e.currentTarget.style.boxShadow = "0 35px 80px rgba(0,0,0,0.3)";
@@ -240,36 +159,36 @@ export default function HomeInteraction() {
           e.currentTarget.style.boxShadow = "0 25px 60px rgba(0,0,0,0.2)";
         }}
       >
-        {/* Visual Background */}
+        {/* Visual Background - Minimalist Grid or Solid */}
         <div style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: "url('/daily_challenge_banner.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "brightness(0.5) saturate(1.1)",
-          zIndex: 0
+          background: "var(--background)",
+          zIndex: 0,
+          opacity: 0.05,
+          backgroundImage: "radial-gradient(var(--foreground) 1px, transparent 1px)",
+          backgroundSize: "20px 20px"
         }} />
         
-        {/* Glassmorphic/Gradient Overlay */}
+        {/* Subtle Side Accent */}
         <div style={{
           position: "absolute",
           top: 0,
-          left: 0,
           right: 0,
-          bottom: 0,
-          background: "linear-gradient(135deg, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.4) 60%, transparent 100%)",
+          width: "30%",
+          height: "100%",
+          background: "linear-gradient(90deg, transparent, rgba(35, 131, 226, 0.05))",
           zIndex: 1
         }} />
 
         {/* Content */}
         <div style={{ position: "relative", zIndex: 10, maxWidth: "600px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "1.2rem" }}>
-            <div style={{ padding: "0.5rem", background: "rgba(35, 131, 226, 0.2)", borderRadius: "12px", border: "1px solid rgba(35, 131, 226, 0.3)" }}>
-              <Calendar size={20} color="#2383E2" />
+            <div style={{ padding: "0.5rem", background: "var(--surface-hover)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+              <Activity size={20} color="#2383E2" />
             </div>
             <div style={{ 
               background: "#2383E2", 
@@ -281,15 +200,15 @@ export default function HomeInteraction() {
               textTransform: "uppercase",
               letterSpacing: "0.1em"
             }}>
-              Limited Daily Event
+              Global Sync Session
             </div>
           </div>
           
-          <h2 style={{ fontSize: "2.8rem", fontWeight: 900, color: "white", margin: "0 0 1rem 0", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+          <h2 style={{ fontSize: "2.8rem", fontWeight: 900, color: "var(--foreground)", margin: "0 0 1rem 0", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
             Daily Global <br/> <span style={{ color: "#2383E2" }}>Challenge</span>
           </h2>
           
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "1.2rem", lineHeight: 1.6, marginBottom: "2.5rem" }}>
+          <p style={{ color: "var(--foreground-muted)", fontSize: "1.2rem", lineHeight: 1.6, marginBottom: "2.5rem" }}>
             Compete worldwide with today&apos;s unique passage. Level up your profile and earn exclusive daily badges.
           </p>
 
@@ -298,14 +217,14 @@ export default function HomeInteraction() {
               onClick={(e) => { e.stopPropagation(); handleStartDaily(); }}
               disabled={generating}
               className="app-button primary" 
-              style={{ width: "auto", padding: "1.2rem 2.5rem", fontSize: "1.1rem", fontWeight: 800, boxShadow: "0 15px 30px rgba(35, 131, 226, 0.5)" }}
+              style={{ width: "auto", padding: "1.2rem 2.5rem", fontSize: "1.1rem", fontWeight: 800, border: "2px solid #2383E2", boxShadow: "none" }}
             >
-              {generating ? "Generating..." : <><Zap size={20} /> START CHALLENGE</>}
+              {generating ? "Initializing..." : <><Play size={20} /> START CHALLENGE</>}
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); router.push("/leaderboard"); }}
               className="app-button" 
-              style={{ width: "auto", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "white", padding: "1.2rem 1.8rem" }}
+              style={{ width: "auto", background: "var(--surface-hover)", border: "1px solid var(--border)", color: "var(--foreground)", padding: "1.2rem 1.8rem" }}
             >
               <Trophy size={18} style={{ marginRight: "0.5rem" }} /> {t.daily_ranking || "Ranking"}
             </button>
@@ -314,26 +233,26 @@ export default function HomeInteraction() {
       </div>
 
       {/* Difficulty Targeting */}
-      <h2 className="notion-h2">{t.category_title}</h2>
-      <p className="notion-p">{t.category_desc}</p>
+      <h2 className="notion-h2 reveal reveal-delay-5">{t.category_title}</h2>
+      <p className="notion-p reveal reveal-delay-5">{t.category_desc}</p>
 
-      <div className="notion-p" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "4px" }}>
+      <div className="notion-p stagger reveal-delay-5" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "4px" }}>
         
-        <button className="app-button" onClick={() => handleStart("EASY")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+        <button className="app-button stagger-item stagger-delay-1" onClick={() => handleStart("EASY")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
              <span style={{ fontWeight: 600 }}>🟢 {t.easy}</span>
              <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~50 {t.words}</span>
            </div>
         </button>
 
-        <button className="app-button" onClick={() => handleStart("NORMAL")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+        <button className="app-button stagger-item stagger-delay-2" onClick={() => handleStart("NORMAL")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
              <span style={{ fontWeight: 600 }}>🟡 {t.normal}</span>
              <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~100 {t.words}</span>
            </div>
         </button>
 
-        <button className="app-button" onClick={() => handleStart("HARD")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
+        <button className="app-button stagger-item stagger-delay-3" onClick={() => handleStart("HARD")} disabled={generating} style={{ padding: "0.75rem", border: "1px solid var(--border)" }}>
            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
              <span style={{ fontWeight: 600 }}>🔴 {t.hard}</span>
              <span style={{ color: "var(--foreground-muted)", fontSize: "0.9rem" }}>~200 {t.words}</span>
@@ -343,31 +262,31 @@ export default function HomeInteraction() {
       </div>
 
       {/* Timed Challenge */}
-      <h2 className="notion-h2">{t.timed_title}</h2>
-      <p className="notion-p">{t.timed_desc}</p>
+      <h2 className="notion-h2 reveal reveal-delay-5">{t.timed_title}</h2>
+      <p className="notion-p reveal reveal-delay-5">{t.timed_desc}</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
-        <button className="app-button" onClick={() => handleStart("TIMED", 15)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+      <div className="stagger reveal-delay-5" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+        <button className="app-button stagger-item stagger-delay-1" onClick={() => handleStart("TIMED", 15)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
            <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>15</span>
            <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.seconds}</span>
         </button>
 
-        <button className="app-button" onClick={() => handleStart("TIMED", 30)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        <button className="app-button stagger-item stagger-delay-2" onClick={() => handleStart("TIMED", 30)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
            <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>30</span>
            <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.seconds}</span>
         </button>
 
-        <button className="app-button" onClick={() => handleStart("TIMED", 60)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        <button className="app-button stagger-item stagger-delay-3" onClick={() => handleStart("TIMED", 60)} disabled={generating} style={{ padding: "1rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
            <span style={{ fontSize: "1.2rem", fontWeight: 800 }}>60</span>
            <span style={{ fontSize: "0.8rem", color: "var(--foreground-muted)" }}>{t.seconds}</span>
         </button>
       </div>
 
       {/* Target Length Settings */}
-      <h2 className="notion-h2">{t.custom_title}</h2>
-      <p className="notion-p">{t.custom_desc}</p>
+      <h2 className="notion-h2 reveal reveal-delay-5">{t.custom_title}</h2>
+      <p className="notion-p reveal reveal-delay-5">{t.custom_desc}</p>
       
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+      <div className="reveal reveal-delay-5" style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
          <input 
             type="number" 
             className="app-input" 

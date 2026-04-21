@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { ConfigProvider } from "@/context/ConfigContext";
 import { AuthProvider } from "@/context/AuthContext";
 import AchievementToast from "@/components/AchievementToast";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Typing",
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <ConfigProvider>
+            <Navbar />
             <div className="root-layout-wrapper">
               {children}
               <Footer />

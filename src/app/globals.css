@@ -135,6 +135,8 @@ body {
   background-color: #2383E2;
   color: #FFFFFF;
   justify-content: center;
+  font-weight: 600;
+  border: 1px solid rgba(0,0,0,0.1);
 }
 
 .app-button.primary:hover {
@@ -147,6 +149,51 @@ body {
 .app-button.danger.active {
   background-color: rgba(235, 87, 87, 0.1);
 }
+
+/* Silky Reveal Animation System (Non-Typewriter Typing Style) */
+@keyframes silkyReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    letter-spacing: 0.1em;
+  }
+  20% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  animation: silkyReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.3s; }
+.reveal-delay-4 { animation-delay: 0.4s; }
+.reveal-delay-5 { animation-delay: 0.5s; }
+
+.stagger > * {
+  opacity: 0;
+}
+
+.stagger-item {
+  animation: silkyReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-delay-1 { animation-delay: 0.05s; }
+.stagger-delay-2 { animation-delay: 0.1s; }
+.stagger-delay-3 { animation-delay: 0.15s; }
+.stagger-delay-4 { animation-delay: 0.2s; }
+.stagger-delay-5 { animation-delay: 0.25s; }
+.stagger-delay-6 { animation-delay: 0.3s; }
+.stagger-delay-7 { animation-delay: 0.35s; }
+.stagger-delay-8 { animation-delay: 0.4s; }
 
 /* Form Elements */
 .app-input {
@@ -240,4 +287,34 @@ body {
 @keyframes caretBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+/* Navbar Styles */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .navbar {
+    background-color: rgba(25, 25, 25, 0.82);
+  }
+}
+
+.navbar-inner {
+  max-width: 1000px;
+  width: 100%;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

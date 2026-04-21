@@ -10,8 +10,8 @@ const REAL_TEXTS = {
       text: "The Apollo program, also known as Project Apollo, was the third United States human spaceflight program carried out by the National Aeronautics and Space Administration (NASA), which succeeded in preparing and landing the first humans on the Moon from 1968 to 1972. It was first conceived in 1960 during President Dwight D. Eisenhower's administration as a three-man spacecraft to follow the one-man Project Mercury, which put the first Americans in space. Apollo was later dedicated to President John F. Kennedy's national goal for the 1960s of landing a man on the Moon and returning him safely to the Earth."
     },
     {
-      title: "Machine Learning",
-      text: "Machine learning (ML) is a field of inquiry devoted to understanding and building methods that 'learn', that is, methods that leverage data to improve performance on some set of tasks. It is seen as a part of artificial intelligence. Machine learning algorithms build a model based on sample data, known as training data, in order to make predictions or decisions without being explicitly programmed to do so. Machine learning algorithms are used in a wide variety of applications, such as in medicine, email filtering, speech recognition, agriculture, and computer vision."
+      title: "Ancient Architecture",
+      text: "Ancient architecture is the study of buildings and structures from the earliest civilizations. It encompasses a wide variety of styles and techniques, from the megalithic structures of the Neolithic period to the grand temples of Ancient Egypt and the classical orders of Greece and Rome. These structures were not only functional but also served as symbols of power, religion, and cultural identity, reflecting the social and technological advancements of their time."
     },
     {
       title: "Philosophy of Stoicism",
@@ -28,8 +28,8 @@ const REAL_TEXTS = {
       text: "相對論是關於時空和引力的理論，主要由愛因斯坦創立，依其研究對象的不同可分為狹義相對論和廣義相對論。相對論和量子力學的提出給物理學帶來了革命性的變化，它們共同奠定了現代物理學的基礎。相對論極大地改變了人類對宇宙和自然的常識性觀念，提出了同時的相對性、四維時空、彎曲時空等全新的概念。不過近年來，人們對於物理理論的分類有了一種新的認識，以其理論是否是決定論的來劃分經典與非經典的物理學。"
     },
     {
-      title: "深度學習與神經網路",
-      text: "深度學習是機器學習的分支，是一種以人工神經網路為架構，對資料進行表徵學習的演算法。深度學習中的讚譽名稱，如「深度神經網路」、「深度信念網路」甚至是「迴圈神經網路」，已經被應用於電腦視覺、語音辨識、自然語言處理、音訊辨識與生物資訊學等領域並獲取了極好的效果。實際上，深度學習有許多結構，有些架構並不一定屬於神經網路家族，不過因為神經網路與大腦神經的高度相似性，這項科技已經成為推動現代人工智慧突破的核心概念。"
+      title: "量子力學基礎",
+      text: "量子力學是物理學的一個分支，主要研究微觀世界的物理現象。它描述了原子及亞原子尺度的能量與物質的行為，與經典物理學有著顯著的不同。量子力學的一個核心概念是波粒二象性，即微觀粒子同時具有波動和粒子的特性。這一理論不僅解釋了原子的能階結構，也為現代電子學、雷射技術以及量子計算的發展奠定了基礎，深刻地改變了我們對自然界基本規律的理解。"
     },
     {
       title: "文藝復興的影響",
@@ -105,7 +105,7 @@ export function generateText(language: "en" | "zh", diff: Difficulty, overrideTi
     text: finalText,
     difficulty: diff === "NORMAL" ? "CORE" : typeof diff === "number" ? "CUSTOM" : diff,
     wordCount: language === "en" ? finalText.split(" ").length : finalText.length,
-    source: "Real Text Knowledge Base"
+    source: "Historical Archive"
   };
 }
 

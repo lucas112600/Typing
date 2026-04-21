@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Plus, Users, Zap, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Users, Target, AlertCircle, Activity } from "lucide-react";
 
 // SIMPLE WARM-UP COMPONENT
 function LobbyWarmUp() {
@@ -34,7 +34,7 @@ function LobbyWarmUp() {
       style={{ padding: "2rem", marginTop: "4rem", cursor: "text", position: "relative" }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "1.5rem", color: "#E2B714" }}>
-        <Sparkles size={18} />
+        <Activity size={18} />
         <span style={{ fontWeight: 600, fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Interactive Warm-up</span>
       </div>
       <div className="mono-text" style={{ fontSize: "1.2rem", lineHeight: "1.6" }}>
@@ -96,7 +96,7 @@ export default function PvPLobby() {
 
       <div style={{ marginBottom: "4rem" }}>
         <h1 className="notion-title" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          Arena Lobby <Zap size={32} color="#E2B714" fill="#E2B714" />
+          Arena Lobby <Target size={32} color="#2383E2" />
         </h1>
         <p className="notion-p" style={{ opacity: 0.6 }}>Only valid room codes can join the race. Create your own arena to begin.</p>
       </div>
